@@ -9,27 +9,24 @@ import HeroSection from './components/HeroSection';
 import { 
   DEFAULT_SITE_CONFIG,
   INTRO_TEXT, 
-  FACILITIES_DATA, 
-  STAFF_DATA, 
   FACULTY_STREAMS, 
-  EXAM_RESULTS,
-  EVENTS_DATA,
-  NEWS_DATA,
-  UI_LABELS
+  UI_LABELS,
+  FACILITIES_DATA as DEFAULT_FACILITIES // Keep as fallback structure only
 } from './constants';
-import { Users, ChevronRight, Quote, UserCircle2 } from 'lucide-react';
+import { Users, ChevronRight, Quote, UserCircle2, Loader } from 'lucide-react';
 import type { Language, EventItem, YearResult, Facility, StaffMember, NewsItem, SiteConfig } from './types';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
+  const [isLoading, setIsLoading] = useState(true);
   
-  // App State
-  const [events, setEvents] = useState<EventItem[]>(EVENTS_DATA);
-  const [examResults, setExamResults] = useState<YearResult[]>(EXAM_RESULTS);
-  const [staff, setStaff] = useState<StaffMember[]>(STAFF_DATA);
-  const [news, setNews] = useState<NewsItem[]>(NEWS_DATA);
-  const [facilities, setFacilities] = useState<Facility[]>(FACILITIES_DATA);
+  // App State - Initialized as empty to avoid showing local placeholders
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [examResults, setExamResults] = useState<YearResult[]>([]);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
   
   // Settings State
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
@@ -37,97 +34,107 @@ const App: React.FC = () => {
   // View State
   const [view, setView] = useState<'public' | 'login' | 'admin'>('public');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [selectedYear, setSelectedYear] = useState(examResults[examResults.length - 1]?.year || "2023-24");
+  const [selectedYear, setSelectedYear] = useState("2023-24");
 
   // Fetch Data from Supabase
   useEffect(() => {
     const fetchData = async () => {
-      if (!isSupabaseConfigured()) return;
+      if (!isSupabaseConfigured()) {
+        setIsLoading(false);
+        return;
+      }
 
-      // Fetch Settings
-      const { data: settingsData } = await supabase.from('jola_settings').select('*');
-      if (settingsData) {
-        const newConfig = { ...DEFAULT_SITE_CONFIG };
-        settingsData.forEach(item => {
-          if (item.key === 'school_name_en') newConfig.schoolName.en = item.value;
-          if (item.key === 'school_name_hi') newConfig.schoolName.hi = item.value;
-          if (item.key === 'school_sub_en') newConfig.subTitle.en = item.value;
-          if (item.key === 'school_sub_hi') newConfig.subTitle.hi = item.value;
-          if (item.key === 'address_en') newConfig.address.en = item.value;
-          if (item.key === 'address_hi') newConfig.address.hi = item.value;
-          if (item.key === 'phone') newConfig.phone = item.value;
-          if (item.key === 'email') newConfig.email = item.value;
-          if (item.key === 'about_image') newConfig.aboutImage = item.value;
-          if (item.key === 'logo') newConfig.logo = item.value;
-          if (item.key === 'hero_images') {
-            try {
-              newConfig.heroImages = JSON.parse(item.value);
-            } catch (e) {
-              console.error("Error parsing hero images", e);
+      try {
+        // 1. Fetch Settings
+        const { data: settingsData } = await supabase.from('jola_settings').select('*');
+        if (settingsData) {
+          const newConfig = { ...DEFAULT_SITE_CONFIG };
+          settingsData.forEach(item => {
+            if (item.key === 'school_name_en') newConfig.schoolName.en = item.value;
+            if (item.key === 'school_name_hi') newConfig.schoolName.hi = item.value;
+            if (item.key === 'school_sub_en') newConfig.subTitle.en = item.value;
+            if (item.key === 'school_sub_hi') newConfig.subTitle.hi = item.value;
+            if (item.key === 'address_en') newConfig.address.en = item.value;
+            if (item.key === 'address_hi') newConfig.address.hi = item.value;
+            if (item.key === 'phone') newConfig.phone = item.value;
+            if (item.key === 'email') newConfig.email = item.value;
+            if (item.key === 'about_image') newConfig.aboutImage = item.value;
+            if (item.key === 'logo') newConfig.logo = item.value;
+            if (item.key === 'hero_images') {
+              try {
+                newConfig.heroImages = JSON.parse(item.value);
+              } catch (e) {
+                console.error("Error parsing hero images", e);
+              }
             }
-          }
-        });
-        setSiteConfig(newConfig);
-      }
+          });
+          setSiteConfig(newConfig);
+        }
 
-      // Fetch Events
-      const { data: eventsData } = await supabase.from('jola_events').select('*').order('created_at', { ascending: false });
-      if (eventsData && eventsData.length > 0) {
-        setEvents(eventsData.map((e: any) => ({
-          id: e.id,
-          title: { en: e.title_en, hi: e.title_hi },
-          desc: { en: e.desc_en, hi: e.desc_hi },
-          img: e.img
-        })));
-      }
+        // 2. Fetch Events
+        const { data: eventsData } = await supabase.from('jola_events').select('*').order('created_at', { ascending: false });
+        if (eventsData) {
+          setEvents(eventsData.map((e: any) => ({
+            id: e.id,
+            title: { en: e.title_en, hi: e.title_hi },
+            desc: { en: e.desc_en, hi: e.desc_hi },
+            img: e.img
+          })));
+        }
 
-      // Fetch Staff
-      const { data: staffData } = await supabase.from('jola_staff').select('*').order('id', { ascending: true });
-      if (staffData && staffData.length > 0) {
-        setStaff(staffData.map((s: any) => ({
-          id: s.id,
-          name: { en: s.name_en, hi: s.name_hi },
-          designation: { en: s.designation_en, hi: s.designation_hi },
-          subject: { en: s.subject_en, hi: s.subject_hi },
-          photo: s.photo
-        })));
-      }
+        // 3. Fetch Staff
+        const { data: staffData } = await supabase.from('jola_staff').select('*').order('id', { ascending: true });
+        if (staffData) {
+          setStaff(staffData.map((s: any) => ({
+            id: s.id,
+            name: { en: s.name_en, hi: s.name_hi },
+            designation: { en: s.designation_en, hi: s.designation_hi },
+            subject: { en: s.subject_en, hi: s.subject_hi },
+            photo: s.photo
+          })));
+        }
 
-      // Fetch News
-      const { data: newsData } = await supabase.from('jola_news').select('*').order('date', { ascending: false });
-      if (newsData && newsData.length > 0) {
-        setNews(newsData.map((n: any) => ({
-          id: n.id,
-          text: { en: n.text_en, hi: n.text_hi },
-          content: { en: n.content_en, hi: n.content_hi },
-          image: n.image,
-          date: n.date,
-          link: n.link
-        })));
-      }
-      
-      // Fetch Results
-      const { data: resultsData } = await supabase.from('jola_results').select('*').order('year', { ascending: true });
-      if (resultsData && resultsData.length > 0) {
-        setExamResults(resultsData.map((r: any) => ({
-          year: r.year,
-          class10: r.class10,
-          class12: r.class12
-        })));
-        setSelectedYear(resultsData[resultsData.length - 1].year);
-      }
+        // 4. Fetch News
+        const { data: newsData } = await supabase.from('jola_news').select('*').order('date', { ascending: false });
+        if (newsData) {
+          setNews(newsData.map((n: any) => ({
+            id: n.id,
+            text: { en: n.text_en, hi: n.text_hi },
+            content: { en: n.content_en, hi: n.content_hi },
+            image: n.image,
+            date: n.date,
+            link: n.link
+          })));
+        }
+        
+        // 5. Fetch Results
+        const { data: resultsData } = await supabase.from('jola_results').select('*').order('year', { ascending: true });
+        if (resultsData && resultsData.length > 0) {
+          setExamResults(resultsData.map((r: any) => ({
+            year: r.year,
+            class10: r.class10,
+            class12: r.class12
+          })));
+          setSelectedYear(resultsData[resultsData.length - 1].year);
+        }
 
-      // Fetch Facilities
-      const { data: facilitiesData } = await supabase.from('jola_facilities').select('*');
-      if (facilitiesData && facilitiesData.length > 0) {
-         const mergedFacilities = facilitiesData.map((f: any, index: number) => ({
-           id: f.id,
-           title: { en: f.title_en, hi: f.title_hi },
-           description: { en: f.description_en, hi: f.description_hi },
-           image: f.image,
-           icon: FACILITIES_DATA[index % FACILITIES_DATA.length]?.icon || FACILITIES_DATA[0].icon
-         }));
-         setFacilities(mergedFacilities);
+        // 6. Fetch Facilities
+        const { data: facilitiesData } = await supabase.from('jola_facilities').select('*');
+        if (facilitiesData) {
+           const mergedFacilities = facilitiesData.map((f: any, index: number) => ({
+             id: f.id,
+             title: { en: f.title_en, hi: f.title_hi },
+             description: { en: f.description_en, hi: f.description_hi },
+             image: f.image,
+             // Fallback to default icons cyclically
+             icon: DEFAULT_FACILITIES[index % DEFAULT_FACILITIES.length]?.icon || DEFAULT_FACILITIES[0].icon
+           }));
+           setFacilities(mergedFacilities);
+        }
+      } catch (error) {
+        console.error("Error fetching data from Supabase:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -148,7 +155,17 @@ const App: React.FC = () => {
   // Derived Data
   const currentResult = examResults.find(r => r.year === selectedYear) || examResults[examResults.length - 1];
 
-  // Routing
+  // Routing & Loading Views
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white text-orange-600">
+        <Loader className="w-12 h-12 animate-spin mb-4" />
+        <h2 className="text-xl font-semibold animate-pulse">Loading School Portal...</h2>
+        <p className="text-sm text-gray-400 mt-2">Fetching data from server</p>
+      </div>
+    );
+  }
+
   if (view === 'login') {
     return <Login onLogin={handleLoginSuccess} onCancel={() => setView('public')} />;
   }
@@ -186,7 +203,7 @@ const App: React.FC = () => {
       <HeroSection lang={lang} config={siteConfig} />
 
       {/* News Section (Below Hero) */}
-      <NewsSection lang={lang} news={news} />
+      {news.length > 0 && <NewsSection lang={lang} news={news} />}
 
       {/* About Section */}
       <section id="about" className="py-20 bg-white">
@@ -229,248 +246,256 @@ const App: React.FC = () => {
       </section>
 
       {/* Facilities Section */}
-      <section id="facilities" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="text-orange-600 font-semibold uppercase text-sm tracking-wider">{UI_LABELS.infrastructure[lang]}</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">{UI_LABELS.facilitiesTitle[lang]}</h2>
-            <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
-              {UI_LABELS.facilitiesSub[lang]}
-            </p>
-          </div>
+      {facilities.length > 0 && (
+        <section id="facilities" className="py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <span className="text-orange-600 font-semibold uppercase text-sm tracking-wider">{UI_LABELS.infrastructure[lang]}</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">{UI_LABELS.facilitiesTitle[lang]}</h2>
+              <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
+                {UI_LABELS.facilitiesSub[lang]}
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {facilities.map((facility, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden group">
-                <div className="h-48 overflow-hidden">
-                  <img 
-                    src={facility.image} 
-                    alt={facility.title[lang]} 
-                    className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center mb-3">
-                    <div className="p-2 bg-orange-100 text-orange-600 rounded-lg mr-3">
-                      {facility.icon}
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900">{facility.title[lang]}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {facilities.map((facility, index) => (
+                <div key={index} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden group">
+                  <div className="h-48 overflow-hidden">
+                    <img 
+                      src={facility.image} 
+                      alt={facility.title[lang]} 
+                      className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
+                    />
                   </div>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {facility.description[lang]}
-                  </p>
+                  <div className="p-6">
+                    <div className="flex items-center mb-3">
+                      <div className="p-2 bg-orange-100 text-orange-600 rounded-lg mr-3">
+                        {facility.icon}
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-900">{facility.title[lang]}</h3>
+                    </div>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {facility.description[lang]}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Faculty Section */}
-      <section id="faculty" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            {/* Staff List */}
-            <div className="lg:col-span-2">
-              <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center">
-                <Users className="mr-3 text-orange-600" /> {UI_LABELS.ourStaff[lang]}
-              </h2>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.name[lang]}</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.designation[lang]}</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.subject[lang]}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {staff.map((member) => (
-                      <tr key={member.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {member.photo ? (
-                            <img src={member.photo} alt={member.name[lang]} className="h-10 w-10 rounded-full object-cover border border-gray-200" />
-                          ) : (
-                            <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 border border-orange-200">
-                               <UserCircle2 className="w-6 h-6" />
-                            </div>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.name[lang]}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{member.designation[lang]}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">{member.subject[lang]}</td>
+      {staff.length > 0 && (
+        <section id="faculty" className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+              {/* Staff List */}
+              <div className="lg:col-span-2">
+                <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center">
+                  <Users className="mr-3 text-orange-600" /> {UI_LABELS.ourStaff[lang]}
+                </h2>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.name[lang]}</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.designation[lang]}</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.subject[lang]}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Faculties Info */}
-            <div className="bg-slate-800 text-white rounded-2xl p-8 shadow-xl">
-              <h3 className="text-2xl font-bold mb-6 border-b border-slate-700 pb-4">{UI_LABELS.academicStreams[lang]}</h3>
-              <div className="space-y-8">
-                {FACULTY_STREAMS.map((stream, idx) => (
-                  <div key={idx}>
-                    <h4 className="text-lg font-semibold text-orange-400 mb-3">{stream.name[lang]}</h4>
-                    <ul className="space-y-2">
-                      {stream.subjects.map((sub, i) => (
-                        <li key={i} className="flex items-center text-slate-300 text-sm">
-                          <ChevronRight className="h-4 w-4 text-slate-500 mr-2" />
-                          {sub[lang]}
-                        </li>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {staff.map((member) => (
+                        <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {member.photo ? (
+                              <img src={member.photo} alt={member.name[lang]} className="h-10 w-10 rounded-full object-cover border border-gray-200" />
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 border border-orange-200">
+                                <UserCircle2 className="w-6 h-6" />
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.name[lang]}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{member.designation[lang]}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">{member.subject[lang]}</td>
+                        </tr>
                       ))}
-                    </ul>
-                  </div>
-                ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Faculties Info */}
+              <div className="bg-slate-800 text-white rounded-2xl p-8 shadow-xl">
+                <h3 className="text-2xl font-bold mb-6 border-b border-slate-700 pb-4">{UI_LABELS.academicStreams[lang]}</h3>
+                <div className="space-y-8">
+                  {FACULTY_STREAMS.map((stream, idx) => (
+                    <div key={idx}>
+                      <h4 className="text-lg font-semibold text-orange-400 mb-3">{stream.name[lang]}</h4>
+                      <ul className="space-y-2">
+                        {stream.subjects.map((sub, i) => (
+                          <li key={i} className="flex items-center text-slate-300 text-sm">
+                            <ChevronRight className="h-4 w-4 text-slate-500 mr-2" />
+                            {sub[lang]}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Results Section */}
-      <section id="results" className="py-20 bg-orange-50/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-             <span className="text-orange-600 font-semibold uppercase text-sm tracking-wider">{UI_LABELS.performance[lang]}</span>
-             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">{UI_LABELS.academicExcellence[lang]}</h2>
-          </div>
-          
-          {/* Chart */}
-          <div className="mb-12">
-            <ResultChart lang={lang} results={examResults} />
-          </div>
-
-          {/* Year Selector */}
-          <div className="flex overflow-x-auto pb-4 mb-8 gap-2 scrollbar-hide">
-            {examResults.map((res) => (
-              <button
-                key={res.year}
-                onClick={() => setSelectedYear(res.year)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                  selectedYear === res.year
-                    ? 'bg-orange-600 text-white shadow-lg transform scale-105'
-                    : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                {res.year}
-              </button>
-            ))}
-          </div>
-
-          {/* Detailed Results Card */}
-          {currentResult && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Class 10 */}
-            <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-orange-500">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">{UI_LABELS.class10[lang]}</h3>
-                <span className="bg-orange-100 text-orange-800 text-xs px-3 py-1 rounded-full font-bold">{selectedYear}</span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4 mb-6 text-center">
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-800">{currentResult.class10.totalStudents}</div>
-                  <div className="text-xs text-gray-500 uppercase">{UI_LABELS.total[lang]}</div>
-                </div>
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{currentResult.class10.passed}</div>
-                  <div className="text-xs text-green-600 uppercase">{UI_LABELS.passed[lang]}</div>
-                </div>
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{currentResult.class10.passPercentage === 'NA' ? 'N/A' : `${currentResult.class10.passPercentage}%`}</div>
-                  <div className="text-xs text-blue-600 uppercase">{UI_LABELS.rate[lang]}</div>
-                </div>
-              </div>
-
-              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">{UI_LABELS.toppers[lang]}</h4>
-              <div className="space-y-3">
-                {currentResult.class10.toppers.length > 0 ? (
-                  currentResult.class10.toppers.map((topper, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                      <div className="flex items-center">
-                        <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold mr-3 ${i===0 ? 'bg-yellow-100 text-yellow-700' : i===1 ? 'bg-gray-200 text-gray-700' : 'bg-orange-100 text-orange-700'}`}>
-                          {topper.rank}
-                        </div>
-                        <span className="font-medium text-gray-800">{topper.name}</span>
-                      </div>
-                      <span className="font-bold text-orange-600">{topper.percentage}%</span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-400 text-center text-sm italic">{UI_LABELS.noData[lang]}</p>
-                )}
-              </div>
+      {examResults.length > 0 && (
+        <section id="results" className="py-20 bg-orange-50/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <span className="text-orange-600 font-semibold uppercase text-sm tracking-wider">{UI_LABELS.performance[lang]}</span>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mt-2">{UI_LABELS.academicExcellence[lang]}</h2>
+            </div>
+            
+            {/* Chart */}
+            <div className="mb-12">
+              <ResultChart lang={lang} results={examResults} />
             </div>
 
-            {/* Class 12 */}
-            <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-green-600">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900">{UI_LABELS.class12[lang]}</h3>
-                <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-bold">{selectedYear}</span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-4 mb-6 text-center">
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-800">{currentResult.class12.totalStudents}</div>
-                  <div className="text-xs text-gray-500 uppercase">{UI_LABELS.total[lang]}</div>
+            {/* Year Selector */}
+            <div className="flex overflow-x-auto pb-4 mb-8 gap-2 scrollbar-hide">
+              {examResults.map((res) => (
+                <button
+                  key={res.year}
+                  onClick={() => setSelectedYear(res.year)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                    selectedYear === res.year
+                      ? 'bg-orange-600 text-white shadow-lg transform scale-105'
+                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                  }`}
+                >
+                  {res.year}
+                </button>
+              ))}
+            </div>
+
+            {/* Detailed Results Card */}
+            {currentResult && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Class 10 */}
+              <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-orange-500">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">{UI_LABELS.class10[lang]}</h3>
+                  <span className="bg-orange-100 text-orange-800 text-xs px-3 py-1 rounded-full font-bold">{selectedYear}</span>
                 </div>
-                <div className="bg-green-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{currentResult.class12.passed}</div>
-                  <div className="text-xs text-green-600 uppercase">{UI_LABELS.passed[lang]}</div>
+                
+                <div className="grid grid-cols-3 gap-4 mb-6 text-center">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-800">{currentResult.class10.totalStudents}</div>
+                    <div className="text-xs text-gray-500 uppercase">{UI_LABELS.total[lang]}</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{currentResult.class10.passed}</div>
+                    <div className="text-xs text-green-600 uppercase">{UI_LABELS.passed[lang]}</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{currentResult.class10.passPercentage === 'NA' ? 'N/A' : `${currentResult.class10.passPercentage}%`}</div>
+                    <div className="text-xs text-blue-600 uppercase">{UI_LABELS.rate[lang]}</div>
+                  </div>
                 </div>
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{currentResult.class12.passPercentage === 'NA' ? 'N/A' : `${currentResult.class12.passPercentage}%`}</div>
-                  <div className="text-xs text-blue-600 uppercase">{UI_LABELS.rate[lang]}</div>
+
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">{UI_LABELS.toppers[lang]}</h4>
+                <div className="space-y-3">
+                  {currentResult.class10.toppers.length > 0 ? (
+                    currentResult.class10.toppers.map((topper, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div className="flex items-center">
+                          <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold mr-3 ${i===0 ? 'bg-yellow-100 text-yellow-700' : i===1 ? 'bg-gray-200 text-gray-700' : 'bg-orange-100 text-orange-700'}`}>
+                            {topper.rank}
+                          </div>
+                          <span className="font-medium text-gray-800">{topper.name}</span>
+                        </div>
+                        <span className="font-bold text-orange-600">{topper.percentage}%</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-400 text-center text-sm italic">{UI_LABELS.noData[lang]}</p>
+                  )}
                 </div>
               </div>
 
-              <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">{UI_LABELS.toppers[lang]}</h4>
-              <div className="space-y-3">
-                {currentResult.class12.toppers.length > 0 ? (
-                  currentResult.class12.toppers.map((topper, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                      <div className="flex items-center">
-                        <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold mr-3 ${i===0 ? 'bg-yellow-100 text-yellow-700' : i===1 ? 'bg-gray-200 text-gray-700' : 'bg-orange-100 text-orange-700'}`}>
-                          {topper.rank}
+              {/* Class 12 */}
+              <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-green-600">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">{UI_LABELS.class12[lang]}</h3>
+                  <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-bold">{selectedYear}</span>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-4 mb-6 text-center">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="text-2xl font-bold text-gray-800">{currentResult.class12.totalStudents}</div>
+                    <div className="text-xs text-gray-500 uppercase">{UI_LABELS.total[lang]}</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{currentResult.class12.passed}</div>
+                    <div className="text-xs text-green-600 uppercase">{UI_LABELS.passed[lang]}</div>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{currentResult.class12.passPercentage === 'NA' ? 'N/A' : `${currentResult.class12.passPercentage}%`}</div>
+                    <div className="text-xs text-blue-600 uppercase">{UI_LABELS.rate[lang]}</div>
+                  </div>
+                </div>
+
+                <h4 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">{UI_LABELS.toppers[lang]}</h4>
+                <div className="space-y-3">
+                  {currentResult.class12.toppers.length > 0 ? (
+                    currentResult.class12.toppers.map((topper, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div className="flex items-center">
+                          <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-bold mr-3 ${i===0 ? 'bg-yellow-100 text-yellow-700' : i===1 ? 'bg-gray-200 text-gray-700' : 'bg-orange-100 text-orange-700'}`}>
+                            {topper.rank}
+                          </div>
+                          <span className="font-medium text-gray-800">{topper.name}</span>
                         </div>
-                        <span className="font-medium text-gray-800">{topper.name}</span>
+                        <span className="font-bold text-green-600">{topper.percentage}%</span>
                       </div>
-                      <span className="font-bold text-green-600">{topper.percentage}%</span>
-                    </div>
-                  ))
-                ) : (
-                   <p className="text-gray-400 text-center text-sm italic">{UI_LABELS.noData[lang]}</p>
-                )}
+                    ))
+                  ) : (
+                    <p className="text-gray-400 text-center text-sm italic">{UI_LABELS.noData[lang]}</p>
+                  )}
+                </div>
               </div>
             </div>
+            )}
           </div>
-          )}
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Events Ticker/Grid Section */}
-      <section id="events" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900">{UI_LABELS.lifeAtCampus[lang]}</h2>
-            <p className="text-gray-500 mt-2">{UI_LABELS.lifeSub[lang]}</p>
+      {events.length > 0 && (
+        <section id="events" className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900">{UI_LABELS.lifeAtCampus[lang]}</h2>
+              <p className="text-gray-500 mt-2">{UI_LABELS.lifeSub[lang]}</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map((event, i) => (
+                <div key={i} className="group relative overflow-hidden rounded-xl cursor-pointer">
+                  <img src={event.img} alt={event.title[lang]} className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <div className="absolute inset-0 bg-black bg-opacity-40 hover:bg-opacity-30 transition-opacity flex flex-col justify-end p-6 text-white">
+                    <h3 className="font-bold text-xl">{event.title[lang]}</h3>
+                    <p className="text-sm text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">{event.desc[lang]}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event, i) => (
-               <div key={i} className="group relative overflow-hidden rounded-xl cursor-pointer">
-                 <img src={event.img} alt={event.title[lang]} className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" />
-                 <div className="absolute inset-0 bg-black bg-opacity-40 hover:bg-opacity-30 transition-opacity flex flex-col justify-end p-6 text-white">
-                   <h3 className="font-bold text-xl">{event.title[lang]}</h3>
-                   <p className="text-sm text-gray-200 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">{event.desc[lang]}</p>
-                 </div>
-               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <Footer lang={lang} onAdminClick={() => setView('login')} config={siteConfig} />
     </div>
