@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon, Users, Bell, Edit2, X, Upload, Building2, Copy, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon, Users, Bell, Edit2, X, Upload, Building2, Copy, Check, RefreshCw, Loader } from 'lucide-react';
 import type { EventItem, YearResult, Facility, StaffMember, NewsItem } from '../types';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
@@ -36,6 +36,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [globalUploadUrl, setGlobalUploadUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
 
+  // Gallery State
+  const [galleryImages, setGalleryImages] = useState<{name: string, url: string}[]>([]);
+  const [loadingGallery, setLoadingGallery] = useState(false);
+
   // Editing States
   const [editingEventIndex, setEditingEventIndex] = useState<number | null>(null);
   const [editingStaffId, setEditingStaffId] = useState<number | null>(null);
@@ -49,6 +53,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [newStaff, setNewStaff] = useState({ nameEn: '', nameHi: '', designationEn: '', designationHi: '', subjectEn: '', subjectHi: '', photo: '' });
   const [newNews, setNewNews] = useState({ textEn: '', textHi: '', contentEn: '', contentHi: '', image: '', date: '' });
   const [newFacility, setNewFacility] = useState({ titleEn: '', titleHi: '', descEn: '', descHi: '', image: '' });
+
+  // Fetch Gallery Images
+  const fetchGalleryImages = async () => {
+    if (!isSupabaseConfigured()) return;
+    setLoadingGallery(true);
+    try {
+      const { data, error } = await supabase.storage.from('jolaschoolBucket').list('', {
+        limit: 100,
+        offset: 0,
+        sortBy: { column: 'created_at', order: 'desc' },
+      });
+      
+      if (error) {
+        console.error('Error fetching gallery:', error);
+      } else if (data) {
+        const images = data
+          .filter(file => file.name !== '.emptyFolderPlaceholder') 
+          .map(file => {
+          const { data: { publicUrl } } = supabase.storage.from('jolaschoolBucket').getPublicUrl(file.name);
+          return { name: file.name, url: publicUrl };
+        });
+        setGalleryImages(images);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoadingGallery(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'media') {
+      fetchGalleryImages();
+    }
+  }, [activeTab]);
 
   // Helper: Upload Image
   const handleImageUpload = async (file: File): Promise<string | null> => {
@@ -79,6 +118,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       return null;
     } finally {
       setUploading(false);
+    }
+  };
+
+  // Helper: Delete Image
+  const handleDeleteImage = async (imageName: string) => {
+    if(!window.confirm("Are you sure you want to delete this image? If it is used on the website, the link will break.")) return;
+    try {
+      const { error } = await supabase.storage.from('jolaschoolBucket').remove([imageName]);
+      if (error) throw error;
+      fetchGalleryImages(); // Refresh
+    } catch (error) {
+      alert("Error deleting image");
+      console.error(error);
+    }
+  };
+
+  // Helper: Rename Image (Edit)
+  const handleRenameImage = async (oldName: string) => {
+    const newName = prompt("Enter new filename (keep the extension, e.g., image.jpg):", oldName);
+    if(!newName || newName === oldName) return;
+
+    try {
+        const { error } = await supabase.storage.from('jolaschoolBucket').move(oldName, newName);
+        if(error) throw error;
+        fetchGalleryImages(); // Refresh
+    } catch (error) {
+        alert("Error renaming image. Ensure the name is unique.");
+        console.error(error);
     }
   };
 
@@ -447,7 +514,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <input type="file" className="hidden" accept="image/*" disabled={uploading} onChange={async (e) => {
                         if(e.target.files?.[0]) {
                            const url = await handleImageUpload(e.target.files[0]);
-                           if(url) setNewStaff(prev => ({...prev, photo: url}));
+                           if(url) {
+                              setNewStaff(prev => ({...prev, photo: url}));
+                           }
                         }
                       }} />
                     </label>
@@ -508,7 +577,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <input type="file" className="hidden" accept="image/*" disabled={uploading} onChange={async (e) => {
                         if(e.target.files?.[0]) {
                            const url = await handleImageUpload(e.target.files[0]);
-                           if(url) setNewEvent(prev => ({...prev, img: url}));
+                           if(url) {
+                              setNewEvent(prev => ({...prev, img: url}));
+                           }
                         }
                       }} />
                     </label>
@@ -607,7 +678,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <input type="file" className="hidden" accept="image/*" disabled={uploading} onChange={async (e) => {
                         if(e.target.files?.[0]) {
                            const url = await handleImageUpload(e.target.files[0]);
-                           if(url) setNewNews(prev => ({...prev, image: url}));
+                           if(url) {
+                              setNewNews(prev => ({...prev, image: url}));
+                           }
                         }
                       }} />
                     </label>
@@ -660,7 +733,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <input type="file" className="hidden" accept="image/*" disabled={uploading} onChange={async (e) => {
                         if(e.target.files?.[0]) {
                            const url = await handleImageUpload(e.target.files[0]);
-                           if(url) setNewFacility(prev => ({...prev, image: url}));
+                           if(url) {
+                             setNewFacility(prev => ({...prev, image: url}));
+                           }
                         }
                       }} />
                     </label>
@@ -691,8 +766,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <div className="space-y-8">
             {/* Global Uploader */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-200 bg-orange-50/30">
-              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center"><Upload className="w-5 h-5 mr-2 text-orange-600" /> Global Image Uploader</h2>
-              <p className="text-sm text-gray-600 mb-4">Upload an image here to generate a URL that you can use anywhere on the website (News, Staff, Events, etc).</p>
+              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center"><Upload className="w-5 h-5 mr-2 text-orange-600" /> Global Image Uploader & Library</h2>
+              <p className="text-sm text-gray-600 mb-4">Upload new images here. Below is your image library where you can view, copy links, rename, or delete images.</p>
               
               <div className="flex flex-col md:flex-row gap-4 items-start">
                  <div className="flex-1 w-full">
@@ -704,7 +779,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                        <input type="file" className="hidden" accept="image/*" disabled={uploading} onChange={async (e) => {
                           if(e.target.files?.[0]) {
                             const url = await handleImageUpload(e.target.files[0]);
-                            if(url) setGlobalUploadUrl(url);
+                            if(url) {
+                              setGlobalUploadUrl(url);
+                              fetchGalleryImages(); // Auto refresh gallery
+                            }
                           }
                        }} />
                     </label>
@@ -727,6 +805,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </div>
             </div>
 
+            {/* Gallery Grid */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-lg font-bold text-gray-900 flex items-center"><ImageIcon className="w-5 h-5 mr-2 text-orange-600" /> Image Library</h2>
+                    <button onClick={fetchGalleryImages} className="text-sm text-blue-600 hover:underline flex items-center bg-blue-50 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors">
+                      {loadingGallery ? <Loader className="w-3 h-3 mr-1 animate-spin" /> : <RefreshCw className="w-3 h-3 mr-1"/>} 
+                      Refresh
+                    </button>
+                </div>
+
+                {loadingGallery && galleryImages.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500"><Loader className="w-8 h-8 animate-spin mx-auto mb-2 text-orange-500" /> Loading library...</div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {galleryImages.map((img) => (
+                          <div key={img.name} className="group relative bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all">
+                              <div className="aspect-square bg-gray-100 relative overflow-hidden">
+                                  <img src={img.url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                      <button onClick={() => copyToClipboard(img.url)} className="p-2 bg-white rounded-full hover:bg-gray-100 text-gray-800 transition-colors" title="Copy Link"><Copy className="w-4 h-4"/></button>
+                                      <button onClick={() => handleRenameImage(img.name)} className="p-2 bg-white rounded-full hover:bg-blue-50 text-blue-600 transition-colors" title="Rename"><Edit2 className="w-4 h-4"/></button>
+                                      <button onClick={() => handleDeleteImage(img.name)} className="p-2 bg-white rounded-full hover:bg-red-50 text-red-600 transition-colors" title="Delete"><Trash2 className="w-4 h-4"/></button>
+                                  </div>
+                              </div>
+                              <div className="p-2 bg-white border-t border-gray-100">
+                                <p className="text-xs text-gray-500 truncate font-mono select-all" title={img.name}>{img.name}</p>
+                              </div>
+                          </div>
+                      ))}
+                      {galleryImages.length === 0 && !loadingGallery && (
+                        <div className="col-span-full text-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                          No images found in library. Upload one above.
+                        </div>
+                      )}
+                  </div>
+                )}
+            </div>
+
             {/* Site Images */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
               <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center border-b pb-2"><ImageIcon className="w-5 h-5 mr-2 text-orange-600" /> Site Banner Images</h2>
@@ -735,11 +851,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Image</label>
                    <div className="flex gap-2 mb-2">
                      <input type="text" value={heroImage} onChange={(e) => setHeroImage(e.target.value)} className="flex-1 border p-2 rounded" />
-                     <label className="cursor-pointer bg-gray-100 border p-2 rounded"><Upload className="w-5 h-5" />
+                     <label className="cursor-pointer bg-gray-100 border p-2 rounded hover:bg-gray-200"><Upload className="w-5 h-5" />
                         <input type="file" className="hidden" accept="image/*" onChange={async(e) => {
                           if(e.target.files?.[0]) {
                             const url = await handleImageUpload(e.target.files[0]);
-                            if(url) setHeroImage(url);
+                            if(url) {
+                              setHeroImage(url);
+                              fetchGalleryImages();
+                            }
                           }
                         }} />
                      </label>
@@ -750,11 +869,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                    <label className="block text-sm font-medium text-gray-700 mb-2">About Image</label>
                    <div className="flex gap-2 mb-2">
                      <input type="text" value={aboutImage} onChange={(e) => setAboutImage(e.target.value)} className="flex-1 border p-2 rounded" />
-                     <label className="cursor-pointer bg-gray-100 border p-2 rounded"><Upload className="w-5 h-5" />
+                     <label className="cursor-pointer bg-gray-100 border p-2 rounded hover:bg-gray-200"><Upload className="w-5 h-5" />
                         <input type="file" className="hidden" accept="image/*" onChange={async(e) => {
                           if(e.target.files?.[0]) {
                             const url = await handleImageUpload(e.target.files[0]);
-                            if(url) setAboutImage(url);
+                            if(url) {
+                              setAboutImage(url);
+                              fetchGalleryImages();
+                            }
                           }
                         }} />
                      </label>
