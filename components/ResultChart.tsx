@@ -9,9 +9,14 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { EXAM_RESULTS } from '../constants';
+import { EXAM_RESULTS, UI_LABELS } from '../constants';
+import type { Language } from '../types';
 
-const ResultChart: React.FC = () => {
+interface ResultChartProps {
+  lang: Language;
+}
+
+const ResultChart: React.FC<ResultChartProps> = ({ lang }) => {
   const data = EXAM_RESULTS.map((r) => ({
     name: r.year.replace('20', "'"), // Shorten year label
     Class10: r.class10.passPercentage === 'NA' ? 0 : Number(r.class10.passPercentage),
@@ -20,7 +25,7 @@ const ResultChart: React.FC = () => {
 
   return (
     <div className="h-[400px] w-full bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-      <h3 className="text-lg font-semibold mb-4 text-center text-gray-700">Pass Percentage Trend (2012-2024)</h3>
+      <h3 className="text-lg font-semibold mb-4 text-center text-gray-700">{UI_LABELS.passTrend[lang]} (2012-2024)</h3>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={data}
@@ -36,7 +41,7 @@ const ResultChart: React.FC = () => {
           <YAxis domain={[0, 100]} stroke="#6b7280" unit="%" />
           <Tooltip 
             contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}
-            formatter={(value: number) => [`${value}%`, 'Pass Rate']}
+            formatter={(value: number) => [`${value}%`, UI_LABELS.rate[lang]]}
           />
           <Legend verticalAlign="top" height={36}/>
           <Line type="monotone" dataKey="Class10" name="Class 10" stroke="#ea580c" strokeWidth={3} activeDot={{ r: 8 }} />

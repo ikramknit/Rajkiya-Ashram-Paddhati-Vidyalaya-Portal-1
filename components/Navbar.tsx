@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
-import { Menu, X, GraduationCap } from 'lucide-react';
-import { SCHOOL_NAME_ENGLISH } from '../constants';
+import { Menu, X, GraduationCap, Globe } from 'lucide-react';
+import { SCHOOL_NAME, UI_LABELS } from '../constants';
+import type { Language } from '../types';
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  lang: Language;
+  setLang: (lang: Language) => void;
+}
+
+const Navbar: React.FC<NavbarProps> = ({ lang, setLang }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
-    { name: 'Home', href: '#home' },
-    { name: 'About', href: '#about' },
-    { name: 'Facilities', href: '#facilities' },
-    { name: 'Faculty', href: '#faculty' },
-    { name: 'Results', href: '#results' },
-    { name: 'Events', href: '#events' },
+    { name: UI_LABELS.home[lang], href: '#home' },
+    { name: UI_LABELS.about[lang], href: '#about' },
+    { name: UI_LABELS.facilities[lang], href: '#facilities' },
+    { name: UI_LABELS.faculty[lang], href: '#faculty' },
+    { name: UI_LABELS.results[lang], href: '#results' },
+    { name: UI_LABELS.events[lang], href: '#events' },
   ];
+
+  const toggleLanguage = () => {
+    setLang(lang === 'en' ? 'hi' : 'en');
+  };
 
   return (
     <nav className="bg-white shadow-md sticky top-0 z-50">
@@ -25,24 +35,39 @@ const Navbar: React.FC = () => {
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-lg leading-tight text-gray-800 tracking-tight md:text-xl">
-                  Rajkiya Ashram Paddhati Vidyalaya
+                  {SCHOOL_NAME[lang]}
                 </span>
                 <span className="text-xs text-gray-500 font-medium">Saharanpur, Uttar Pradesh</span>
               </div>
             </div>
           </div>
-          <div className="hidden md:flex items-center space-x-8">
+          
+          <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => (
               <a
-                key={link.name}
+                key={link.href}
                 href={link.href}
-                className="text-gray-600 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                className="text-gray-600 hover:text-orange-600 px-2 py-2 rounded-md text-sm font-medium transition-colors duration-200"
               >
                 {link.name}
               </a>
             ))}
+            <button 
+              onClick={toggleLanguage}
+              className="flex items-center gap-1 px-3 py-1 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors text-sm font-semibold"
+            >
+              <Globe className="w-4 h-4" />
+              {lang === 'en' ? 'हिंदी' : 'English'}
+            </button>
           </div>
-          <div className="flex items-center md:hidden">
+
+          <div className="flex items-center md:hidden gap-4">
+            <button 
+              onClick={toggleLanguage}
+              className="flex items-center gap-1 px-3 py-1 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors text-sm font-semibold"
+            >
+              {lang === 'en' ? 'हिंदी' : 'Eng'}
+            </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-orange-500"
@@ -60,7 +85,7 @@ const Navbar: React.FC = () => {
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navLinks.map((link) => (
               <a
-                key={link.name}
+                key={link.href}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
                 className="text-gray-700 hover:text-orange-600 block px-3 py-2 rounded-md text-base font-medium"

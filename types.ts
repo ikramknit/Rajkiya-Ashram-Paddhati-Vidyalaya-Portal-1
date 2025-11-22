@@ -1,5 +1,12 @@
 import React from 'react';
 
+export type Language = 'en' | 'hi';
+
+export interface BilingualText {
+  en: string;
+  hi: string;
+}
+
 export interface Topper {
   rank: number;
   name: string;
@@ -22,19 +29,25 @@ export interface YearResult {
 
 export interface StaffMember {
   id: number;
-  name: string;
-  designation: string;
-  subject: string;
+  name: BilingualText;
+  designation: BilingualText;
+  subject: BilingualText;
 }
 
 export interface FacultyStream {
-  name: string;
-  subjects: string[];
+  name: BilingualText;
+  subjects: BilingualText[];
 }
 
 export interface Facility {
-  title: string;
-  description: string;
+  title: BilingualText;
+  description: BilingualText;
   icon: React.ReactNode;
   image: string;
+}
+
+export interface EventItem {
+  title: BilingualText;
+  desc: BilingualText;
+  img: string;
 }
