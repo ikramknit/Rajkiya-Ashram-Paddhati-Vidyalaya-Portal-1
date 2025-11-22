@@ -41,6 +41,7 @@ export interface StaffMember {
   name: BilingualText;
   designation: BilingualText;
   subject: BilingualText;
+  photo?: string; // URL to staff photo
 }
 
 export interface FacultyStream {
@@ -49,6 +50,7 @@ export interface FacultyStream {
 }
 
 export interface Facility {
+  id?: number; // Added optional ID for DB sync
   title: BilingualText;
   description: BilingualText;
   icon: React.ReactNode;
@@ -56,6 +58,7 @@ export interface Facility {
 }
 
 export interface EventItem {
+  id?: number; // Added optional ID for DB sync
   title: BilingualText;
   desc: BilingualText;
   img: string;

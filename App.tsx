@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ResultChart from './components/ResultChart';
@@ -17,27 +17,107 @@ import {
   NEWS_DATA,
   UI_LABELS
 } from './constants';
-import { Users, ChevronRight, Quote } from 'lucide-react';
+import { Users, ChevronRight, Quote, UserCircle2 } from 'lucide-react';
 import type { Language, EventItem, YearResult, Facility, StaffMember, NewsItem } from './types';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
   
-  // App State (Lifted from constants to support CMS)
+  // App State
   const [events, setEvents] = useState<EventItem[]>(EVENTS_DATA);
   const [examResults, setExamResults] = useState<YearResult[]>(EXAM_RESULTS);
   const [staff, setStaff] = useState<StaffMember[]>(STAFF_DATA);
   const [news, setNews] = useState<NewsItem[]>(NEWS_DATA);
+  const [facilities, setFacilities] = useState<Facility[]>(FACILITIES_DATA);
   
   // Image State
   const [heroImage, setHeroImage] = useState("https://picsum.photos/id/202/1920/1080");
   const [aboutImage, setAboutImage] = useState("https://picsum.photos/id/237/600/800");
-  const [facilities, setFacilities] = useState<Facility[]>(FACILITIES_DATA);
   
   // View State
   const [view, setView] = useState<'public' | 'login' | 'admin'>('public');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedYear, setSelectedYear] = useState(examResults[examResults.length - 1].year);
+
+  // Fetch Data from Supabase
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!isSupabaseConfigured()) return;
+
+      // Fetch Settings (Images)
+      const { data: settingsData } = await supabase.from('settings').select('*');
+      if (settingsData) {
+        settingsData.forEach(item => {
+          if (item.key === 'hero_image') setHeroImage(item.value);
+          if (item.key === 'about_image') setAboutImage(item.value);
+        });
+      }
+
+      // Fetch Events
+      const { data: eventsData } = await supabase.from('events').select('*').order('created_at', { ascending: false });
+      if (eventsData && eventsData.length > 0) {
+        setEvents(eventsData.map((e: any) => ({
+          id: e.id,
+          title: { en: e.title_en, hi: e.title_hi },
+          desc: { en: e.desc_en, hi: e.desc_hi },
+          img: e.img
+        })));
+      }
+
+      // Fetch Staff
+      const { data: staffData } = await supabase.from('staff').select('*').order('id', { ascending: true });
+      if (staffData && staffData.length > 0) {
+        setStaff(staffData.map((s: any) => ({
+          id: s.id,
+          name: { en: s.name_en, hi: s.name_hi },
+          designation: { en: s.designation_en, hi: s.designation_hi },
+          subject: { en: s.subject_en, hi: s.subject_hi },
+          photo: s.photo
+        })));
+      }
+
+      // Fetch News
+      const { data: newsData } = await supabase.from('news').select('*').order('date', { ascending: false });
+      if (newsData && newsData.length > 0) {
+        setNews(newsData.map((n: any) => ({
+          id: n.id,
+          text: { en: n.text_en, hi: n.text_hi },
+          content: { en: n.content_en, hi: n.content_hi },
+          image: n.image,
+          date: n.date,
+          link: n.link
+        })));
+      }
+      
+      // Fetch Results
+      const { data: resultsData } = await supabase.from('results').select('*').order('year', { ascending: true });
+      if (resultsData && resultsData.length > 0) {
+        setExamResults(resultsData.map((r: any) => ({
+          year: r.year,
+          class10: r.class10,
+          class12: r.class12
+        })));
+      }
+
+      // Fetch Facilities
+      const { data: facilitiesData } = await supabase.from('facilities').select('*');
+      if (facilitiesData && facilitiesData.length > 0) {
+         // Note: Icon mapping is tricky with dynamic data, we'll merge with static icons if needed or use a default
+         const mergedFacilities = facilitiesData.map((f: any, index: number) => ({
+           id: f.id,
+           title: { en: f.title_en, hi: f.title_hi },
+           description: { en: f.description_en, hi: f.description_hi },
+           image: f.image,
+           // Fallback to existing icons based on index or default
+           icon: FACILITIES_DATA[index % FACILITIES_DATA.length]?.icon || FACILITIES_DATA[0].icon
+         }));
+         setFacilities(mergedFacilities);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Handlers
   const handleLoginSuccess = () => {
@@ -211,6 +291,7 @@ const App: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.name[lang]}</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.designation[lang]}</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{UI_LABELS.subject[lang]}</th>
@@ -219,6 +300,15 @@ const App: React.FC = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {staff.map((member) => (
                       <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {member.photo ? (
+                            <img src={member.photo} alt={member.name[lang]} className="h-10 w-10 rounded-full object-cover border border-gray-200" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 border border-orange-200">
+                               <UserCircle2 className="w-6 h-6" />
+                            </div>
+                          )}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.name[lang]}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{member.designation[lang]}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">{member.subject[lang]}</td>

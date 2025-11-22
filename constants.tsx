@@ -104,6 +104,7 @@ export const NEWS_DATA: NewsItem[] = [
 
 export const FACILITIES_DATA: Facility[] = [
   {
+    id: 1,
     title: { en: "Smart Class (Digital Education)", hi: "डिजिटल शिक्षा (स्मार्ट क्लास)" },
     description: { 
       en: "Equipped with projectors, tablet labs, and computer labs. Includes Khan Academy online education, Embibe for Science/Social Science, and English Literacy programs.", 
@@ -113,6 +114,7 @@ export const FACILITIES_DATA: Facility[] = [
     image: "https://picsum.photos/id/1/800/600"
   },
   {
+    id: 2,
     title: { en: "Library", hi: "पुस्तकालय" },
     description: { 
       en: "A well-stocked library to foster reading habits and knowledge enhancement among students.", 
@@ -122,6 +124,7 @@ export const FACILITIES_DATA: Facility[] = [
     image: "https://picsum.photos/id/24/800/600"
   },
   {
+    id: 3,
     title: { en: "Laboratories", hi: "प्रयोगशाला" },
     description: { 
       en: "Fully equipped Physics, Chemistry, and Biology laboratories for practical learning.", 
@@ -131,6 +134,7 @@ export const FACILITIES_DATA: Facility[] = [
     image: "https://picsum.photos/id/20/800/600"
   },
   {
+    id: 4,
     title: { en: "Hostel", hi: "आवासीय व्यवस्था" },
     description: { 
       en: "A residential school with a separate hostel building for boys with a capacity of 490 students.", 
@@ -140,6 +144,7 @@ export const FACILITIES_DATA: Facility[] = [
     image: "https://picsum.photos/id/129/800/600"
   },
   {
+    id: 5,
     title: { en: "Mess Facility", hi: "मेस व्यवस्था" },
     description: { 
       en: "Nutritious food provided according to a fixed menu. Managed by a Mess Committee ensuring hygiene and quality.", 
@@ -149,6 +154,7 @@ export const FACILITIES_DATA: Facility[] = [
     image: "https://picsum.photos/id/429/800/600"
   },
   {
+    id: 6,
     title: { en: "Sports & Yoga", hi: "खेल एवं योग" },
     description: { 
       en: "Daily morning yoga, prayers, and regular sports activities for physical and mental well-being.", 
@@ -158,6 +164,7 @@ export const FACILITIES_DATA: Facility[] = [
     image: "https://picsum.photos/id/73/800/600"
   },
   {
+    id: 7,
     title: { en: "Health Care", hi: "स्वास्थ्य परीक्षण" },
     description: { 
       en: "Regular health checkup camps organized by the Community Health Center.", 
@@ -167,6 +174,7 @@ export const FACILITIES_DATA: Facility[] = [
     image: "https://picsum.photos/id/338/800/600"
   },
   {
+    id: 8,
     title: { en: "Environment", hi: "पर्यावरण" },
     description: { 
       en: "Tree plantation drives and cleanliness campaigns (Swachhata Abhiyan) to maintain a green campus.", 
@@ -219,31 +227,37 @@ export const FACULTY_STREAMS: FacultyStream[] = [
 
 export const EVENTS_DATA: EventItem[] = [
   { 
+    id: 1,
     title: { en: "Winter Cloth Distribution", hi: "शीतकालीन वस्त्र वितरण" }, 
     desc: { en: "Distribution by Hon. District Magistrate", hi: "माननीय जिलाधिकारी द्वारा वितरण" }, 
     img: "https://picsum.photos/id/1060/400/300" 
   },
   { 
+    id: 2,
     title: { en: "Welcome Ceremony", hi: "स्वागत समारोह" }, 
     desc: { en: "Welcoming newly admitted students", hi: "नवप्रवेशित छात्रों का स्वागत" }, 
     img: "https://picsum.photos/id/1059/400/300" 
   },
   { 
+    id: 3,
     title: { en: "Scouts & Guides", hi: "स्काउट (Scout)" }, 
     desc: { en: "Leadership and discipline training", hi: "नेतृत्व और अनुशासन प्रशिक्षण" }, 
     img: "https://picsum.photos/id/103/400/300" 
   },
   { 
+    id: 4,
     title: { en: "Tree Plantation", hi: "वृक्षारोपण" }, 
     desc: { en: "Keeping the environment clean and green", hi: "पर्यावरण को स्वच्छ और हरा-भरा रखना" }, 
     img: "https://picsum.photos/id/1047/400/300" 
   },
   { 
+    id: 5,
     title: { en: "Cleanliness Drive", hi: "स्वच्छता अभियान" }, 
     desc: { en: "Shramdaan and Swachhata Abhiyan", hi: "श्रमदान और स्वच्छता अभियान" }, 
     img: "https://picsum.photos/id/1080/400/300" 
   },
   { 
+    id: 6,
     title: { en: "Cultural Programs", hi: "सांस्कृतिक कार्यक्रम" }, 
     desc: { en: "Celebrating Jayantis and National Festivals", hi: "जयंती और राष्ट्रीय त्योहारों का उत्सव" }, 
     img: "https://picsum.photos/id/1015/400/300" 
