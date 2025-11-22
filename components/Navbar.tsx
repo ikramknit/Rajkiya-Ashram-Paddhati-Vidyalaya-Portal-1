@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Menu, X, GraduationCap, Globe } from 'lucide-react';
+import { Menu, X, GraduationCap, Globe, Lock } from 'lucide-react';
 import { SCHOOL_NAME, UI_LABELS } from '../constants';
 import type { Language } from '../types';
 
 interface NavbarProps {
   lang: Language;
   setLang: (lang: Language) => void;
+  onLoginClick: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ lang, setLang }) => {
+const Navbar: React.FC<NavbarProps> = ({ lang, setLang, onLoginClick }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
@@ -42,7 +43,8 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang }) => {
             </div>
           </div>
           
-          <div className="hidden md:flex items-center space-x-6">
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center space-x-4">
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -52,19 +54,32 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang }) => {
                 {link.name}
               </a>
             ))}
-            <button 
-              onClick={toggleLanguage}
-              className="flex items-center gap-1 px-3 py-1 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors text-sm font-semibold"
-            >
-              <Globe className="w-4 h-4" />
-              {lang === 'en' ? 'हिंदी' : 'English'}
-            </button>
+            
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
+              <button 
+                onClick={toggleLanguage}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors text-xs font-bold uppercase tracking-wide"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                {lang === 'en' ? 'हिंदी' : 'ENG'}
+              </button>
+              
+              <button 
+                onClick={onLoginClick}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors text-xs font-bold uppercase tracking-wide"
+                title="Admin Login"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                Login
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center md:hidden gap-4">
+          {/* Mobile Menu Button */}
+          <div className="flex items-center md:hidden gap-3">
             <button 
               onClick={toggleLanguage}
-              className="flex items-center gap-1 px-3 py-1 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors text-sm font-semibold"
+              className="flex items-center gap-1 px-3 py-1 rounded-full border border-orange-200 text-orange-600 hover:bg-orange-50 transition-colors text-xs font-bold"
             >
               {lang === 'en' ? 'हिंदी' : 'Eng'}
             </button>
@@ -79,7 +94,7 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang }) => {
         </div>
       </div>
 
-      {/* Mobile menu */}
+      {/* Mobile menu dropdown */}
       {isOpen && (
         <div className="md:hidden bg-white border-t border-gray-100">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
@@ -93,6 +108,15 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang }) => {
                 {link.name}
               </a>
             ))}
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                onLoginClick();
+              }}
+              className="w-full text-left text-gray-500 hover:text-orange-600 block px-3 py-2 rounded-md text-base font-medium flex items-center gap-2"
+            >
+              <Lock className="w-4 h-4" /> Admin Login
+            </button>
           </div>
         </div>
       )}

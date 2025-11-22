@@ -63,7 +63,11 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar lang={lang} setLang={setLang} />
+      <Navbar 
+        lang={lang} 
+        setLang={setLang} 
+        onLoginClick={() => setView('login')} 
+      />
 
       {/* Hero Section */}
       <div id="home" className="relative bg-gray-900 text-white">
