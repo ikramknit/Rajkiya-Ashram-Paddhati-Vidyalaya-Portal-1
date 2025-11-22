@@ -1,21 +1,33 @@
 import React from 'react';
-import type { YearResult, StaffMember, FacultyStream, Facility, BilingualText, EventItem, NewsItem } from './types';
+import type { YearResult, StaffMember, FacultyStream, Facility, BilingualText, EventItem, NewsItem, SiteConfig } from './types';
 import { BookOpen, Monitor, Home, Utensils, Activity, HeartPulse, TreePine, FlaskConical } from 'lucide-react';
 
-export const SCHOOL_NAME: BilingualText = {
-  en: "Rajkiya Ashram Paddhati Vidyalaya",
-  hi: "राजकीय आश्रम पद्धति विद्यालय"
+export const DEFAULT_SITE_CONFIG: SiteConfig = {
+  schoolName: {
+    en: "Rajkiya Ashram Paddhati Vidyalaya",
+    hi: "राजकीय आश्रम पद्धति विद्यालय"
+  },
+  subTitle: {
+    en: "Samaj Kalyan Vibhag, Uttar Pradesh",
+    hi: "समाज कल्याण विभाग, उत्तर प्रदेश"
+  },
+  address: {
+    en: "Zila Dindoli, Nagal, Saharanpur, Uttar Pradesh",
+    hi: "जिला डिंडोली, नागल, सहारनपुर, उत्तर प्रदेश"
+  },
+  phone: "+91 123 456 7890",
+  email: "contact@rapv-saharanpur.in",
+  heroImages: [
+    "https://picsum.photos/id/202/1920/1080",
+    "https://picsum.photos/id/237/1920/1080",
+    "https://picsum.photos/id/129/1920/1080"
+  ],
+  aboutImage: "https://picsum.photos/id/237/600/800"
 };
 
-export const SCHOOL_NAME_SUB: BilingualText = {
-  en: "Samaj Kalyan Vibhag, Uttar Pradesh",
-  hi: "समाज कल्याण विभाग, उत्तर प्रदेश"
-};
-
-export const ADDRESS: BilingualText = {
-  en: "Zila Dindoli, Nagal, Saharanpur, Uttar Pradesh",
-  hi: "जिला डिंडोली, नागल, सहारनपुर, उत्तर प्रदेश"
-};
+export const SCHOOL_NAME: BilingualText = DEFAULT_SITE_CONFIG.schoolName;
+export const SCHOOL_NAME_SUB: BilingualText = DEFAULT_SITE_CONFIG.subTitle;
+export const ADDRESS: BilingualText = DEFAULT_SITE_CONFIG.address;
 
 export const DEPARTMENT: BilingualText = {
   en: "Samaj Kalyan Vibhag, Uttar Pradesh",

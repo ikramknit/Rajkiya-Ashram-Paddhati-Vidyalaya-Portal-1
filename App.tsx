@@ -5,9 +5,9 @@ import ResultChart from './components/ResultChart';
 import Login from './components/Login';
 import AdminDashboard from './components/AdminDashboard';
 import NewsSection from './components/NewsSection';
+import HeroSection from './components/HeroSection';
 import { 
-  SCHOOL_NAME, 
-  SCHOOL_NAME_SUB, 
+  DEFAULT_SITE_CONFIG,
   INTRO_TEXT, 
   FACILITIES_DATA, 
   STAFF_DATA, 
@@ -18,7 +18,7 @@ import {
   UI_LABELS
 } from './constants';
 import { Users, ChevronRight, Quote, UserCircle2 } from 'lucide-react';
-import type { Language, EventItem, YearResult, Facility, StaffMember, NewsItem } from './types';
+import type { Language, EventItem, YearResult, Facility, StaffMember, NewsItem, SiteConfig } from './types';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 const App: React.FC = () => {
@@ -31,9 +31,8 @@ const App: React.FC = () => {
   const [news, setNews] = useState<NewsItem[]>(NEWS_DATA);
   const [facilities, setFacilities] = useState<Facility[]>(FACILITIES_DATA);
   
-  // Image State
-  const [heroImage, setHeroImage] = useState("https://picsum.photos/id/202/1920/1080");
-  const [aboutImage, setAboutImage] = useState("https://picsum.photos/id/237/600/800");
+  // Settings State
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(DEFAULT_SITE_CONFIG);
   
   // View State
   const [view, setView] = useState<'public' | 'login' | 'admin'>('public');
@@ -45,13 +44,29 @@ const App: React.FC = () => {
     const fetchData = async () => {
       if (!isSupabaseConfigured()) return;
 
-      // Fetch Settings (Images)
+      // Fetch Settings
       const { data: settingsData } = await supabase.from('jola_settings').select('*');
       if (settingsData) {
+        const newConfig = { ...DEFAULT_SITE_CONFIG };
         settingsData.forEach(item => {
-          if (item.key === 'hero_image') setHeroImage(item.value);
-          if (item.key === 'about_image') setAboutImage(item.value);
+          if (item.key === 'school_name_en') newConfig.schoolName.en = item.value;
+          if (item.key === 'school_name_hi') newConfig.schoolName.hi = item.value;
+          if (item.key === 'school_sub_en') newConfig.subTitle.en = item.value;
+          if (item.key === 'school_sub_hi') newConfig.subTitle.hi = item.value;
+          if (item.key === 'address_en') newConfig.address.en = item.value;
+          if (item.key === 'address_hi') newConfig.address.hi = item.value;
+          if (item.key === 'phone') newConfig.phone = item.value;
+          if (item.key === 'email') newConfig.email = item.value;
+          if (item.key === 'about_image') newConfig.aboutImage = item.value;
+          if (item.key === 'hero_images') {
+            try {
+              newConfig.heroImages = JSON.parse(item.value);
+            } catch (e) {
+              console.error("Error parsing hero images", e);
+            }
+          }
         });
+        setSiteConfig(newConfig);
       }
 
       // Fetch Events
@@ -103,13 +118,11 @@ const App: React.FC = () => {
       // Fetch Facilities
       const { data: facilitiesData } = await supabase.from('jola_facilities').select('*');
       if (facilitiesData && facilitiesData.length > 0) {
-         // Note: Icon mapping is tricky with dynamic data, we'll merge with static icons if needed or use a default
          const mergedFacilities = facilitiesData.map((f: any, index: number) => ({
            id: f.id,
            title: { en: f.title_en, hi: f.title_hi },
            description: { en: f.description_en, hi: f.description_hi },
            image: f.image,
-           // Fallback to existing icons based on index or default
            icon: FACILITIES_DATA[index % FACILITIES_DATA.length]?.icon || FACILITIES_DATA[0].icon
          }));
          setFacilities(mergedFacilities);
@@ -151,10 +164,8 @@ const App: React.FC = () => {
         setStaff={setStaff}
         news={news}
         setNews={setNews}
-        heroImage={heroImage}
-        setHeroImage={setHeroImage}
-        aboutImage={aboutImage}
-        setAboutImage={setAboutImage}
+        siteConfig={siteConfig}
+        setSiteConfig={setSiteConfig}
         onLogout={handleLogout} 
       />
     );
@@ -165,37 +176,12 @@ const App: React.FC = () => {
       <Navbar 
         lang={lang} 
         setLang={setLang} 
-        onLoginClick={() => setView('login')} 
+        onLoginClick={() => setView('login')}
+        config={siteConfig}
       />
 
       {/* Hero Section */}
-      <div id="home" className="relative bg-gray-900 text-white">
-        <div className="absolute inset-0">
-          <img 
-            src={heroImage} 
-            alt="School Building" 
-            className="w-full h-full object-cover opacity-40"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/90"></div>
-        </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 md:py-48 flex flex-col items-center text-center">
-          <h2 className="text-orange-400 font-semibold tracking-wider uppercase text-sm md:text-base mb-4 animate-fade-in-up">
-            {SCHOOL_NAME_SUB[lang]}
-          </h2>
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 font-serif leading-tight animate-fade-in-up delay-100">
-            {lang === 'en' ? SCHOOL_NAME.hi : SCHOOL_NAME.en} <br />
-            <span className="text-2xl md:text-4xl lg:text-5xl mt-2 block text-gray-200 font-sans">
-              {SCHOOL_NAME[lang]}
-            </span>
-          </h1>
-          <p className="max-w-2xl text-lg text-gray-300 mb-8 animate-fade-in-up delay-200">
-            {UI_LABELS.govtInitiative[lang]}
-          </p>
-          <a href="#about" className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-full font-semibold transition-all shadow-lg hover:shadow-orange-500/30 animate-fade-in-up delay-300">
-            {UI_LABELS.discoverMore[lang]}
-          </a>
-        </div>
-      </div>
+      <HeroSection lang={lang} config={siteConfig} />
 
       {/* News Section (Below Hero) */}
       <NewsSection lang={lang} news={news} />
@@ -226,7 +212,7 @@ const App: React.FC = () => {
             </div>
             <div className="relative">
               <img 
-                src={aboutImage} 
+                src={siteConfig.aboutImage} 
                 alt="Students" 
                 className="rounded-2xl shadow-2xl w-full h-[500px] object-cover z-10 relative"
               />
@@ -482,7 +468,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <Footer lang={lang} onAdminClick={() => setView('login')} />
+      <Footer lang={lang} onAdminClick={() => setView('login')} config={siteConfig} />
     </div>
   );
 };

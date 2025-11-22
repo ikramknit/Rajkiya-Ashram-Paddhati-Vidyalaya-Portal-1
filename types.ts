@@ -7,6 +7,16 @@ export interface BilingualText {
   hi: string;
 }
 
+export interface SiteConfig {
+  schoolName: BilingualText;
+  subTitle: BilingualText;
+  address: BilingualText;
+  phone: string;
+  email: string;
+  heroImages: string[];
+  aboutImage: string;
+}
+
 export interface NewsItem {
   id: number;
   text: BilingualText; // Headline

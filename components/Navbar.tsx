@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { Menu, X, GraduationCap, Globe, Lock } from 'lucide-react';
-import { SCHOOL_NAME, UI_LABELS } from '../constants';
-import type { Language } from '../types';
+import { UI_LABELS } from '../constants';
+import type { Language, SiteConfig } from '../types';
 
 interface NavbarProps {
   lang: Language;
   setLang: (lang: Language) => void;
   onLoginClick: () => void;
+  config: SiteConfig;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ lang, setLang, onLoginClick }) => {
+const Navbar: React.FC<NavbarProps> = ({ lang, setLang, onLoginClick, config }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
@@ -35,8 +36,8 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang, onLoginClick }) => {
                  <GraduationCap className="h-6 w-6 text-white" />
               </div>
               <div className="flex flex-col">
-                <span className="font-bold text-lg leading-tight text-gray-800 tracking-tight md:text-xl">
-                  {SCHOOL_NAME[lang]}
+                <span className="font-bold text-lg leading-tight text-gray-800 tracking-tight md:text-xl line-clamp-1">
+                  {config.schoolName[lang]}
                 </span>
                 <span className="text-xs text-gray-500 font-medium">Saharanpur, Uttar Pradesh</span>
               </div>

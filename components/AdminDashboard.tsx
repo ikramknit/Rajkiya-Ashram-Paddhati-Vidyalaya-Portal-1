@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon, Users, Bell, Edit2, X, Upload, Building2, Copy, Check, RefreshCw, Loader } from 'lucide-react';
-import type { EventItem, YearResult, Facility, StaffMember, NewsItem } from '../types';
+import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon, Users, Bell, Edit2, X, Upload, Building2, Copy, Check, RefreshCw, Loader, Settings, GripVertical } from 'lucide-react';
+import type { EventItem, YearResult, Facility, StaffMember, NewsItem, SiteConfig } from '../types';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
 interface AdminDashboardProps {
@@ -14,10 +14,8 @@ interface AdminDashboardProps {
   setStaff: React.Dispatch<React.SetStateAction<StaffMember[]>>;
   news: NewsItem[];
   setNews: React.Dispatch<React.SetStateAction<NewsItem[]>>;
-  heroImage: string;
-  setHeroImage: (url: string) => void;
-  aboutImage: string;
-  setAboutImage: (url: string) => void;
+  siteConfig: SiteConfig;
+  setSiteConfig: React.Dispatch<React.SetStateAction<SiteConfig>>;
   onLogout: () => void;
 }
 
@@ -27,11 +25,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   facilities, setFacilities,
   staff, setStaff,
   news, setNews,
-  heroImage, setHeroImage,
-  aboutImage, setAboutImage,
+  siteConfig, setSiteConfig,
   onLogout,
 }) => {
-  const [activeTab, setActiveTab] = useState<'events' | 'results' | 'media' | 'staff' | 'news' | 'facilities'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'results' | 'media' | 'staff' | 'news' | 'facilities' | 'settings'>('events');
   const [uploading, setUploading] = useState(false);
   const [globalUploadUrl, setGlobalUploadUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
@@ -438,17 +435,47 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
-  // --- IMAGE SETTINGS ---
+  // --- SETTINGS Handlers ---
   const handleSaveSettings = async () => {
     if (isSupabaseConfigured()) {
-       await supabase.from('jola_settings').upsert([
-         { key: 'hero_image', value: heroImage },
-         { key: 'about_image', value: aboutImage }
-       ]);
-       alert('Images saved to database!');
+      // We must save each key individually in jola_settings
+      const upserts = [
+        { key: 'school_name_en', value: siteConfig.schoolName.en },
+        { key: 'school_name_hi', value: siteConfig.schoolName.hi },
+        { key: 'school_sub_en', value: siteConfig.subTitle.en },
+        { key: 'school_sub_hi', value: siteConfig.subTitle.hi },
+        { key: 'address_en', value: siteConfig.address.en },
+        { key: 'address_hi', value: siteConfig.address.hi },
+        { key: 'phone', value: siteConfig.phone },
+        { key: 'email', value: siteConfig.email },
+        { key: 'hero_images', value: JSON.stringify(siteConfig.heroImages) },
+        { key: 'about_image', value: siteConfig.aboutImage },
+      ];
+      
+      const { error } = await supabase.from('jola_settings').upsert(upserts);
+      if (error) {
+        console.error("Settings save error:", error);
+        alert("Error saving settings");
+      } else {
+        alert('Website settings updated successfully!');
+      }
     } else {
       alert('Supabase not configured');
     }
+  };
+
+  // Helper for hero images array
+  const addHeroImage = () => {
+    setSiteConfig({...siteConfig, heroImages: [...siteConfig.heroImages, ""]});
+  };
+  const updateHeroImage = (idx: number, val: string) => {
+    const newImages = [...siteConfig.heroImages];
+    newImages[idx] = val;
+    setSiteConfig({...siteConfig, heroImages: newImages});
+  };
+  const removeHeroImage = (idx: number) => {
+    const newImages = siteConfig.heroImages.filter((_, i) => i !== idx);
+    setSiteConfig({...siteConfig, heroImages: newImages});
   };
 
   const TabButton = ({ id, label, icon: Icon }: { id: string, label: string, icon: any }) => (
@@ -480,8 +507,106 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <TabButton id="staff" label="Staff" icon={Users} />
           <TabButton id="news" label="News" icon={Bell} />
           <TabButton id="facilities" label="Facilities" icon={Building2} />
-          <TabButton id="media" label="Media & Images" icon={ImageIcon} />
+          <TabButton id="settings" label="General Settings" icon={Settings} />
+          <TabButton id="media" label="Media Library" icon={ImageIcon} />
         </div>
+
+        {/* --- GENERAL SETTINGS TAB --- */}
+        {activeTab === 'settings' && (
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center"><Settings className="w-5 h-5 mr-2 text-orange-600" /> Website Configuration</h2>
+            
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 <div>
+                   <label className="block text-xs font-medium text-gray-500 uppercase mb-1">School Name (English)</label>
+                   <input type="text" value={siteConfig.schoolName.en} onChange={(e) => setSiteConfig({...siteConfig, schoolName: {...siteConfig.schoolName, en: e.target.value}})} className="w-full border p-2 rounded" />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-medium text-gray-500 uppercase mb-1">School Name (Hindi)</label>
+                   <input type="text" value={siteConfig.schoolName.hi} onChange={(e) => setSiteConfig({...siteConfig, schoolName: {...siteConfig.schoolName, hi: e.target.value}})} className="w-full border p-2 rounded" />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Subtitle / Dept (English)</label>
+                   <input type="text" value={siteConfig.subTitle.en} onChange={(e) => setSiteConfig({...siteConfig, subTitle: {...siteConfig.subTitle, en: e.target.value}})} className="w-full border p-2 rounded" />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Subtitle / Dept (Hindi)</label>
+                   <input type="text" value={siteConfig.subTitle.hi} onChange={(e) => setSiteConfig({...siteConfig, subTitle: {...siteConfig.subTitle, hi: e.target.value}})} className="w-full border p-2 rounded" />
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t pt-6">
+                 <div>
+                   <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Address (English)</label>
+                   <input type="text" value={siteConfig.address.en} onChange={(e) => setSiteConfig({...siteConfig, address: {...siteConfig.address, en: e.target.value}})} className="w-full border p-2 rounded" />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Address (Hindi)</label>
+                   <input type="text" value={siteConfig.address.hi} onChange={(e) => setSiteConfig({...siteConfig, address: {...siteConfig.address, hi: e.target.value}})} className="w-full border p-2 rounded" />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Phone</label>
+                   <input type="text" value={siteConfig.phone} onChange={(e) => setSiteConfig({...siteConfig, phone: e.target.value})} className="w-full border p-2 rounded" />
+                 </div>
+                 <div>
+                   <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Email</label>
+                   <input type="text" value={siteConfig.email} onChange={(e) => setSiteConfig({...siteConfig, email: e.target.value})} className="w-full border p-2 rounded" />
+                 </div>
+              </div>
+
+              {/* About Image */}
+              <div className="border-t pt-6">
+                 <h3 className="font-medium text-gray-900 mb-3">About Section Image</h3>
+                 <div className="flex gap-2">
+                    <input type="text" value={siteConfig.aboutImage} onChange={(e) => setSiteConfig({...siteConfig, aboutImage: e.target.value})} className="flex-1 border p-2 rounded" />
+                    <label className="cursor-pointer bg-gray-100 border p-2 rounded hover:bg-gray-200"><Upload className="w-5 h-5" />
+                        <input type="file" className="hidden" accept="image/*" onChange={async(e) => {
+                          if(e.target.files?.[0]) {
+                            const url = await handleImageUpload(e.target.files[0]);
+                            if(url) setSiteConfig({...siteConfig, aboutImage: url});
+                          }
+                        }} />
+                    </label>
+                 </div>
+                 <img src={siteConfig.aboutImage} className="h-24 w-auto object-cover mt-2 rounded bg-gray-50" />
+              </div>
+
+              {/* Hero Slideshow */}
+              <div className="border-t pt-6">
+                 <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-medium text-gray-900">Hero Slideshow Images</h3>
+                    <button onClick={addHeroImage} className="text-xs flex items-center text-blue-600 hover:text-blue-800 font-medium"><Plus className="w-3 h-3 mr-1"/> Add Slide</button>
+                 </div>
+                 <div className="space-y-3">
+                   {siteConfig.heroImages.map((img, idx) => (
+                     <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded border border-gray-100">
+                       <span className="text-xs text-gray-400 font-mono w-4">{idx+1}</span>
+                       <img src={img} className="w-10 h-8 object-cover rounded bg-gray-200" />
+                       <input type="text" value={img} onChange={(e) => updateHeroImage(idx, e.target.value)} className="flex-1 border p-1 rounded text-sm" />
+                       <label className="cursor-pointer p-1 hover:bg-gray-200 rounded text-gray-500"><Upload className="w-4 h-4" />
+                          <input type="file" className="hidden" accept="image/*" onChange={async(e) => {
+                            if(e.target.files?.[0]) {
+                              const url = await handleImageUpload(e.target.files[0]);
+                              if(url) updateHeroImage(idx, url);
+                            }
+                          }} />
+                       </label>
+                       <button onClick={() => removeHeroImage(idx)} className="p-1 hover:bg-red-100 text-red-500 rounded"><Trash2 className="w-4 h-4" /></button>
+                     </div>
+                   ))}
+                 </div>
+              </div>
+
+              <div className="pt-4">
+                 <button onClick={handleSaveSettings} className="w-full md:w-auto bg-orange-600 text-white px-6 py-3 rounded shadow hover:bg-orange-700 font-medium flex items-center justify-center">
+                   <Save className="w-4 h-4 mr-2" /> Save Configuration
+                 </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* --- STAFF TAB --- */}
         {activeTab === 'staff' && (
@@ -841,50 +966,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       )}
                   </div>
                 )}
-            </div>
-
-            {/* Site Images */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center border-b pb-2"><ImageIcon className="w-5 h-5 mr-2 text-orange-600" /> Site Banner Images</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">Hero Image</label>
-                   <div className="flex gap-2 mb-2">
-                     <input type="text" value={heroImage} onChange={(e) => setHeroImage(e.target.value)} className="flex-1 border p-2 rounded" />
-                     <label className="cursor-pointer bg-gray-100 border p-2 rounded hover:bg-gray-200"><Upload className="w-5 h-5" />
-                        <input type="file" className="hidden" accept="image/*" onChange={async(e) => {
-                          if(e.target.files?.[0]) {
-                            const url = await handleImageUpload(e.target.files[0]);
-                            if(url) {
-                              setHeroImage(url);
-                              fetchGalleryImages();
-                            }
-                          }
-                        }} />
-                     </label>
-                   </div>
-                   <img src={heroImage} className="h-32 w-full object-cover rounded bg-gray-100" />
-                </div>
-                <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">About Image</label>
-                   <div className="flex gap-2 mb-2">
-                     <input type="text" value={aboutImage} onChange={(e) => setAboutImage(e.target.value)} className="flex-1 border p-2 rounded" />
-                     <label className="cursor-pointer bg-gray-100 border p-2 rounded hover:bg-gray-200"><Upload className="w-5 h-5" />
-                        <input type="file" className="hidden" accept="image/*" onChange={async(e) => {
-                          if(e.target.files?.[0]) {
-                            const url = await handleImageUpload(e.target.files[0]);
-                            if(url) {
-                              setAboutImage(url);
-                              fetchGalleryImages();
-                            }
-                          }
-                        }} />
-                     </label>
-                   </div>
-                   <img src={aboutImage} className="h-32 w-full object-cover rounded bg-gray-100" />
-                </div>
-              </div>
-              <button onClick={handleSaveSettings} className="mt-4 bg-orange-600 text-white px-4 py-2 rounded shadow-sm hover:bg-orange-700 flex items-center"><Save className="w-4 h-4 mr-2"/> Save Images to DB</button>
             </div>
           </div>
         )}
