@@ -95,9 +95,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       };
       
       if (editingEventIndex !== null && events[editingEventIndex].id) {
-         await supabase.from('events').update(dbPayload).eq('id', events[editingEventIndex].id);
+         await supabase.from('jola_events').update(dbPayload).eq('id', events[editingEventIndex].id);
       } else {
-         await supabase.from('events').insert([dbPayload]);
+         await supabase.from('jola_events').insert([dbPayload]);
       }
       // Refresh happens on next load or manually updated state below for immediate UI feedback
     }
@@ -126,7 +126,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleDeleteEvent = async (index: number) => {
     if (window.confirm('Delete this event?')) {
       if (isSupabaseConfigured() && events[index].id) {
-         await supabase.from('events').delete().eq('id', events[index].id);
+         await supabase.from('jola_events').delete().eq('id', events[index].id);
       }
       setEvents(events.filter((_, i) => i !== index));
       if (editingEventIndex === index) { setEditingEventIndex(null); setNewEvent({ titleEn: '', titleHi: '', descEn: '', descHi: '', img: '' }); }
@@ -153,9 +153,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     if (isSupabaseConfigured()) {
       const dbPayload = { year: resultData.year, class10: resultData.class10, class12: resultData.class12 };
       if (editingResultYear) {
-        await supabase.from('results').update(dbPayload).eq('year', editingResultYear);
+        await supabase.from('jola_results').update(dbPayload).eq('year', editingResultYear);
       } else {
-        await supabase.from('results').insert([dbPayload]);
+        await supabase.from('jola_results').insert([dbPayload]);
       }
     }
 
@@ -183,7 +183,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleDeleteResult = async (year: string) => {
     if (window.confirm('Are you sure?')) {
       if (isSupabaseConfigured()) {
-         await supabase.from('results').delete().eq('year', year);
+         await supabase.from('jola_results').delete().eq('year', year);
       }
       setExamResults(examResults.filter(r => r.year !== year));
       if (editingResultYear === year) setEditingResultYear(null);
@@ -209,9 +209,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         photo: newStaff.photo
       };
       if (editingStaffId) {
-        await supabase.from('staff').update(dbPayload).eq('id', editingStaffId);
+        await supabase.from('jola_staff').update(dbPayload).eq('id', editingStaffId);
       } else {
-        const { data } = await supabase.from('staff').insert([dbPayload]).select();
+        const { data } = await supabase.from('jola_staff').insert([dbPayload]).select();
         if (data) memberData.id = data[0].id;
       }
     }
@@ -241,7 +241,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleDeleteStaff = async (id: number) => {
     if (window.confirm('Delete this staff member?')) {
       if (isSupabaseConfigured()) {
-        await supabase.from('staff').delete().eq('id', id);
+        await supabase.from('jola_staff').delete().eq('id', id);
       }
       setStaff(staff.filter(s => s.id !== id));
       if (editingStaffId === id) setEditingStaffId(null);
@@ -266,9 +266,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         image: newNews.image, date: newNews.date
       };
       if (editingNewsId) {
-        await supabase.from('news').update(dbPayload).eq('id', editingNewsId);
+        await supabase.from('jola_news').update(dbPayload).eq('id', editingNewsId);
       } else {
-        const { data } = await supabase.from('news').insert([dbPayload]).select();
+        const { data } = await supabase.from('jola_news').insert([dbPayload]).select();
         if (data) itemData.id = data[0].id;
       }
     }
@@ -298,7 +298,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const handleDeleteNews = async (id: number) => {
     if (window.confirm('Delete this news item?')) {
       if (isSupabaseConfigured()) {
-        await supabase.from('news').delete().eq('id', id);
+        await supabase.from('jola_news').delete().eq('id', id);
       }
       setNews(news.filter(n => n.id !== id));
       if (editingNewsId === id) setEditingNewsId(null);
@@ -308,7 +308,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // --- IMAGE SETTINGS ---
   const handleSaveSettings = async () => {
     if (isSupabaseConfigured()) {
-       await supabase.from('settings').upsert([
+       await supabase.from('jola_settings').upsert([
          { key: 'hero_image', value: heroImage },
          { key: 'about_image', value: aboutImage }
        ]);

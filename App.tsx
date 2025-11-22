@@ -46,7 +46,7 @@ const App: React.FC = () => {
       if (!isSupabaseConfigured()) return;
 
       // Fetch Settings (Images)
-      const { data: settingsData } = await supabase.from('settings').select('*');
+      const { data: settingsData } = await supabase.from('jola_settings').select('*');
       if (settingsData) {
         settingsData.forEach(item => {
           if (item.key === 'hero_image') setHeroImage(item.value);
@@ -55,7 +55,7 @@ const App: React.FC = () => {
       }
 
       // Fetch Events
-      const { data: eventsData } = await supabase.from('events').select('*').order('created_at', { ascending: false });
+      const { data: eventsData } = await supabase.from('jola_events').select('*').order('created_at', { ascending: false });
       if (eventsData && eventsData.length > 0) {
         setEvents(eventsData.map((e: any) => ({
           id: e.id,
@@ -66,7 +66,7 @@ const App: React.FC = () => {
       }
 
       // Fetch Staff
-      const { data: staffData } = await supabase.from('staff').select('*').order('id', { ascending: true });
+      const { data: staffData } = await supabase.from('jola_staff').select('*').order('id', { ascending: true });
       if (staffData && staffData.length > 0) {
         setStaff(staffData.map((s: any) => ({
           id: s.id,
@@ -78,7 +78,7 @@ const App: React.FC = () => {
       }
 
       // Fetch News
-      const { data: newsData } = await supabase.from('news').select('*').order('date', { ascending: false });
+      const { data: newsData } = await supabase.from('jola_news').select('*').order('date', { ascending: false });
       if (newsData && newsData.length > 0) {
         setNews(newsData.map((n: any) => ({
           id: n.id,
@@ -91,7 +91,7 @@ const App: React.FC = () => {
       }
       
       // Fetch Results
-      const { data: resultsData } = await supabase.from('results').select('*').order('year', { ascending: true });
+      const { data: resultsData } = await supabase.from('jola_results').select('*').order('year', { ascending: true });
       if (resultsData && resultsData.length > 0) {
         setExamResults(resultsData.map((r: any) => ({
           year: r.year,
@@ -101,7 +101,7 @@ const App: React.FC = () => {
       }
 
       // Fetch Facilities
-      const { data: facilitiesData } = await supabase.from('facilities').select('*');
+      const { data: facilitiesData } = await supabase.from('jola_facilities').select('*');
       if (facilitiesData && facilitiesData.length > 0) {
          // Note: Icon mapping is tricky with dynamic data, we'll merge with static icons if needed or use a default
          const mergedFacilities = facilitiesData.map((f: any, index: number) => ({
