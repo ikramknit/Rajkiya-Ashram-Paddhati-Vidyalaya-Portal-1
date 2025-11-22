@@ -16,7 +16,7 @@ import {
   UI_LABELS
 } from './constants';
 import { Users, ChevronRight, Quote } from 'lucide-react';
-import type { Language, EventItem, YearResult } from './types';
+import type { Language, EventItem, YearResult, Facility } from './types';
 
 const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
@@ -24,6 +24,11 @@ const App: React.FC = () => {
   // App State (Lifted from constants to support CMS)
   const [events, setEvents] = useState<EventItem[]>(EVENTS_DATA);
   const [examResults, setExamResults] = useState<YearResult[]>(EXAM_RESULTS);
+  
+  // Image State
+  const [heroImage, setHeroImage] = useState("https://picsum.photos/id/202/1920/1080");
+  const [aboutImage, setAboutImage] = useState("https://picsum.photos/id/237/600/800");
+  const [facilities, setFacilities] = useState<Facility[]>(FACILITIES_DATA);
   
   // View State
   const [view, setView] = useState<'public' | 'login' | 'admin'>('public');
@@ -56,6 +61,12 @@ const App: React.FC = () => {
         setEvents={setEvents}
         examResults={examResults}
         setExamResults={setExamResults}
+        facilities={facilities}
+        setFacilities={setFacilities}
+        heroImage={heroImage}
+        setHeroImage={setHeroImage}
+        aboutImage={aboutImage}
+        setAboutImage={setAboutImage}
         onLogout={handleLogout} 
       />
     );
@@ -73,7 +84,7 @@ const App: React.FC = () => {
       <div id="home" className="relative bg-gray-900 text-white">
         <div className="absolute inset-0">
           <img 
-            src="https://picsum.photos/id/202/1920/1080" 
+            src={heroImage} 
             alt="School Building" 
             className="w-full h-full object-cover opacity-40"
           />
@@ -124,7 +135,7 @@ const App: React.FC = () => {
             </div>
             <div className="relative">
               <img 
-                src="https://picsum.photos/id/237/600/800" 
+                src={aboutImage} 
                 alt="Students" 
                 className="rounded-2xl shadow-2xl w-full h-[500px] object-cover z-10 relative"
               />
@@ -150,7 +161,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {FACILITIES_DATA.map((facility, index) => (
+            {facilities.map((facility, index) => (
               <div key={index} className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-shadow duration-300 overflow-hidden group">
                 <div className="h-48 overflow-hidden">
                   <img 

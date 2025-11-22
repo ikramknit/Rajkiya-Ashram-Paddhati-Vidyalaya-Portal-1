@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { LogOut, Plus, Trash2, Calendar, BarChart, Save } from 'lucide-react';
-import type { EventItem, YearResult } from '../types';
+import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon } from 'lucide-react';
+import type { EventItem, YearResult, Facility } from '../types';
 
 interface AdminDashboardProps {
   events: EventItem[];
   setEvents: React.Dispatch<React.SetStateAction<EventItem[]>>;
   examResults: YearResult[];
   setExamResults: React.Dispatch<React.SetStateAction<YearResult[]>>;
+  facilities: Facility[];
+  setFacilities: React.Dispatch<React.SetStateAction<Facility[]>>;
+  heroImage: string;
+  setHeroImage: (url: string) => void;
+  aboutImage: string;
+  setAboutImage: (url: string) => void;
   onLogout: () => void;
 }
 
@@ -15,9 +21,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   setEvents,
   examResults,
   setExamResults,
+  facilities,
+  setFacilities,
+  heroImage,
+  setHeroImage,
+  aboutImage,
+  setAboutImage,
   onLogout,
 }) => {
-  const [activeTab, setActiveTab] = useState<'events' | 'results'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'results' | 'media'>('events');
 
   // Event Form State
   const [newEvent, setNewEvent] = useState({
@@ -82,6 +94,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setExamResults(examResults.filter(r => r.year !== year));
   };
 
+  const handleFacilityImageChange = (index: number, newUrl: string) => {
+    const updatedFacilities = [...facilities];
+    updatedFacilities[index] = { ...updatedFacilities[index], image: newUrl };
+    setFacilities(updatedFacilities);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Admin Header */}
@@ -102,10 +120,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex space-x-4 border-b border-gray-200">
+        <div className="mb-6 flex space-x-4 border-b border-gray-200 overflow-x-auto">
           <button
             onClick={() => setActiveTab('events')}
-            className={`pb-4 px-4 font-medium text-sm border-b-2 transition-colors ${
+            className={`pb-4 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'events'
                 ? 'border-orange-500 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -117,7 +135,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
           <button
             onClick={() => setActiveTab('results')}
-            className={`pb-4 px-4 font-medium text-sm border-b-2 transition-colors ${
+            className={`pb-4 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
               activeTab === 'results'
                 ? 'border-orange-500 text-orange-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -127,9 +145,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <BarChart className="w-4 h-4 mr-2" /> Manage Results
             </div>
           </button>
+          <button
+            onClick={() => setActiveTab('media')}
+            className={`pb-4 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
+              activeTab === 'media'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <div className="flex items-center">
+              <ImageIcon className="w-4 h-4 mr-2" /> Manage Images
+            </div>
+          </button>
         </div>
 
-        {activeTab === 'events' ? (
+        {activeTab === 'events' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Add Event Form */}
             <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
@@ -181,7 +211,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               ))}
             </div>
           </div>
-        ) : (
+        )}
+
+        {activeTab === 'results' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Add Result Form */}
             <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
@@ -244,6 +276,79 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'media' && (
+          <div className="space-y-8 animate-in fade-in duration-300">
+            {/* General Site Images */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center border-b pb-2">
+                <ImageIcon className="w-5 h-5 mr-2 text-orange-600" /> General Site Images
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Hero Background Image URL</label>
+                  <input 
+                    type="text" 
+                    value={heroImage} 
+                    onChange={(e) => setHeroImage(e.target.value)} 
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 mb-3"
+                  />
+                  <div className="relative h-48 w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                    <img src={heroImage} alt="Hero Preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/10 flex items-end p-2">
+                      <span className="text-xs text-white bg-black/50 px-2 py-1 rounded">Preview</span>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">About Section Image URL</label>
+                  <input 
+                    type="text" 
+                    value={aboutImage} 
+                    onChange={(e) => setAboutImage(e.target.value)} 
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 mb-3"
+                  />
+                  <div className="relative h-48 w-full rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+                    <img src={aboutImage} alt="About Preview" className="w-full h-full object-cover" />
+                     <div className="absolute inset-0 bg-black/10 flex items-end p-2">
+                      <span className="text-xs text-white bg-black/50 px-2 py-1 rounded">Preview</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Facilities Images */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center border-b pb-2">
+                <ImageIcon className="w-5 h-5 mr-2 text-orange-600" /> Facilities Images
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {facilities.map((facility, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+                    <h3 className="font-semibold text-gray-800 text-sm mb-3">{facility.title.en} / {facility.title.hi}</h3>
+                    <div className="space-y-3">
+                      <input 
+                        type="text" 
+                        value={facility.image} 
+                        onChange={(e) => handleFacilityImageChange(index, e.target.value)}
+                        placeholder="Image URL"
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-xs"
+                      />
+                      <div className="h-32 w-full rounded overflow-hidden bg-gray-100 border border-gray-200">
+                        <img 
+                          src={facility.image} 
+                          alt={facility.title.en} 
+                          className="w-full h-full object-cover hover:scale-105 transition-transform"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
