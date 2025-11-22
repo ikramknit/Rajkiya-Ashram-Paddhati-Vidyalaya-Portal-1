@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon, Users, Bell, Edit2, X, Upload } from 'lucide-react';
+import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon, Users, Bell, Edit2, X, Upload, Building2, Copy, Check } from 'lucide-react';
 import type { EventItem, YearResult, Facility, StaffMember, NewsItem } from '../types';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
@@ -31,13 +31,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   aboutImage, setAboutImage,
   onLogout,
 }) => {
-  const [activeTab, setActiveTab] = useState<'events' | 'results' | 'media' | 'staff' | 'news'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'results' | 'media' | 'staff' | 'news' | 'facilities'>('events');
   const [uploading, setUploading] = useState(false);
+  const [globalUploadUrl, setGlobalUploadUrl] = useState<string>('');
+  const [copied, setCopied] = useState(false);
 
   // Editing States
   const [editingEventIndex, setEditingEventIndex] = useState<number | null>(null);
   const [editingStaffId, setEditingStaffId] = useState<number | null>(null);
   const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
+  const [editingFacilityId, setEditingFacilityId] = useState<number | null>(null);
   const [editingResultYear, setEditingResultYear] = useState<string | null>(null);
 
   // Forms State
@@ -45,6 +48,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [newResult, setNewResult] = useState({ year: '', class10Total: '', class10Pass: '', class10Percent: '', class12Total: '', class12Pass: '', class12Percent: '' });
   const [newStaff, setNewStaff] = useState({ nameEn: '', nameHi: '', designationEn: '', designationHi: '', subjectEn: '', subjectHi: '', photo: '' });
   const [newNews, setNewNews] = useState({ textEn: '', textHi: '', contentEn: '', contentHi: '', image: '', date: '' });
+  const [newFacility, setNewFacility] = useState({ titleEn: '', titleHi: '', descEn: '', descHi: '', image: '' });
 
   // Helper: Upload Image
   const handleImageUpload = async (file: File): Promise<string | null> => {
@@ -55,7 +59,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       setUploading(true);
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -76,6 +80,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     } finally {
       setUploading(false);
     }
+  };
+
+  // Helper: Copy to Clipboard
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   // --- EVENTS Handlers ---
@@ -99,7 +110,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       } else {
          await supabase.from('jola_events').insert([dbPayload]);
       }
-      // Refresh happens on next load or manually updated state below for immediate UI feedback
     }
 
     if (editingEventIndex !== null) {
@@ -305,6 +315,62 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   };
 
+  // --- FACILITIES Handlers ---
+  const handleSaveFacility = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const facData: Facility = {
+      id: editingFacilityId || Date.now(),
+      title: { en: newFacility.titleEn, hi: newFacility.titleHi },
+      description: { en: newFacility.descEn, hi: newFacility.descHi },
+      image: newFacility.image,
+      icon: <Building2 className="w-6 h-6" /> // Default icon for dynamic items
+    };
+
+    if (isSupabaseConfigured()) {
+      const dbPayload = {
+        title_en: newFacility.titleEn, title_hi: newFacility.titleHi,
+        description_en: newFacility.descEn, description_hi: newFacility.descHi,
+        image: newFacility.image
+      };
+      if (editingFacilityId) {
+        await supabase.from('jola_facilities').update(dbPayload).eq('id', editingFacilityId);
+      } else {
+        const { data } = await supabase.from('jola_facilities').insert([dbPayload]).select();
+        if (data) facData.id = data[0].id;
+      }
+    }
+
+    if (editingFacilityId) {
+      setFacilities(facilities.map(f => f.id === editingFacilityId ? { ...f, ...facData, icon: f.icon } : f));
+      setEditingFacilityId(null);
+    } else {
+      setFacilities([...facilities, facData]);
+    }
+    setNewFacility({ titleEn: '', titleHi: '', descEn: '', descHi: '', image: '' });
+  };
+
+  const handleEditFacility = (id: number) => {
+    const f = facilities.find(fac => fac.id === id);
+    if (f) {
+      setNewFacility({
+        titleEn: f.title.en, titleHi: f.title.hi,
+        descEn: f.description.en, descHi: f.description.hi,
+        image: f.image
+      });
+      setEditingFacilityId(id);
+    }
+  };
+
+  const handleDeleteFacility = async (id: number) => {
+    if (window.confirm('Delete this facility?')) {
+      if (isSupabaseConfigured()) {
+        await supabase.from('jola_facilities').delete().eq('id', id);
+      }
+      setFacilities(facilities.filter(f => f.id !== id));
+      if (editingFacilityId === id) setEditingFacilityId(null);
+    }
+  };
+
   // --- IMAGE SETTINGS ---
   const handleSaveSettings = async () => {
     if (isSupabaseConfigured()) {
@@ -346,7 +412,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <TabButton id="results" label="Results" icon={BarChart} />
           <TabButton id="staff" label="Staff" icon={Users} />
           <TabButton id="news" label="News" icon={Bell} />
-          <TabButton id="media" label="Images" icon={ImageIcon} />
+          <TabButton id="facilities" label="Facilities" icon={Building2} />
+          <TabButton id="media" label="Media & Images" icon={ImageIcon} />
         </div>
 
         {/* --- STAFF TAB --- */}
@@ -572,11 +639,97 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
         )}
 
+        {/* --- FACILITIES TAB --- */}
+        {activeTab === 'facilities' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="bg-white p-6 rounded-xl shadow-sm h-fit border border-gray-200">
+               <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                <span className="flex items-center">{editingFacilityId ? <Edit2 className="w-5 h-5 mr-2 text-orange-600" /> : <Plus className="w-5 h-5 mr-2 text-orange-600" />} {editingFacilityId ? 'Edit Facility' : 'Add Facility'}</span>
+                {editingFacilityId && <button onClick={() => {setEditingFacilityId(null); setNewFacility({ titleEn: '', titleHi: '', descEn: '', descHi: '', image: '' })}} className="text-xs text-red-500 hover:underline flex items-center"><X className="w-3 h-3 mr-1" /> Cancel</button>}
+              </h2>
+              <form onSubmit={handleSaveFacility} className="space-y-4">
+                <input required placeholder="Title (En)" type="text" value={newFacility.titleEn} onChange={e => setNewFacility({...newFacility, titleEn: e.target.value})} className="w-full rounded-md border-gray-300 border p-2" />
+                <input required placeholder="Title (Hi)" type="text" value={newFacility.titleHi} onChange={e => setNewFacility({...newFacility, titleHi: e.target.value})} className="w-full rounded-md border-gray-300 border p-2" />
+                <textarea required placeholder="Description (En)" rows={2} value={newFacility.descEn} onChange={e => setNewFacility({...newFacility, descEn: e.target.value})} className="w-full rounded-md border-gray-300 border p-2" />
+                <textarea required placeholder="Description (Hi)" rows={2} value={newFacility.descHi} onChange={e => setNewFacility({...newFacility, descHi: e.target.value})} className="w-full rounded-md border-gray-300 border p-2" />
+                
+                <div className="flex gap-2">
+                    <input type="text" value={newFacility.image} onChange={e => setNewFacility({...newFacility, image: e.target.value})} placeholder="Image URL" className="flex-1 rounded-md border-gray-300 border p-2 text-sm" />
+                    <label className={`cursor-pointer bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md px-3 py-2 flex items-center ${uploading ? 'opacity-50 cursor-wait' : ''}`}>
+                      <Upload className="w-4 h-4 text-gray-600" />
+                      <input type="file" className="hidden" accept="image/*" disabled={uploading} onChange={async (e) => {
+                        if(e.target.files?.[0]) {
+                           const url = await handleImageUpload(e.target.files[0]);
+                           if(url) setNewFacility(prev => ({...prev, image: url}));
+                        }
+                      }} />
+                    </label>
+                </div>
+
+                <button type="submit" className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+                  <Save className="w-4 h-4 mr-2" /> {editingFacilityId ? 'Update Facility' : 'Save Facility'}
+                </button>
+              </form>
+            </div>
+            <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {facilities.map((fac, idx) => (
+                <div key={idx} className={`bg-white rounded-lg shadow-sm border transition-all flex flex-col ${editingFacilityId === fac.id ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200'}`}>
+                  <div className="relative h-32"><img src={fac.image} alt="Facility" className="h-full w-full object-cover rounded-t-lg" /></div>
+                  <div className="p-4 flex-1"><h3 className="font-bold text-gray-800 line-clamp-1">{fac.title.en}</h3></div>
+                  <div className="bg-gray-50 p-3 border-t border-gray-100 flex justify-between items-center">
+                    <button onClick={() => handleEditFacility(fac.id!)} className="text-blue-600 hover:text-blue-800 text-sm flex items-center font-medium"><Edit2 className="w-3 h-3 mr-1" /> Edit</button>
+                    <button onClick={() => handleDeleteFacility(fac.id!)} className="text-red-600 hover:text-red-800 text-sm flex items-center font-medium"><Trash2 className="w-3 h-3 mr-1" /> Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* --- MEDIA TAB --- */}
         {activeTab === 'media' && (
           <div className="space-y-8">
+            {/* Global Uploader */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-orange-200 bg-orange-50/30">
+              <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center"><Upload className="w-5 h-5 mr-2 text-orange-600" /> Global Image Uploader</h2>
+              <p className="text-sm text-gray-600 mb-4">Upload an image here to generate a URL that you can use anywhere on the website (News, Staff, Events, etc).</p>
+              
+              <div className="flex flex-col md:flex-row gap-4 items-start">
+                 <div className="flex-1 w-full">
+                    <label className={`w-full flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-white hover:bg-gray-50 transition-colors ${uploading ? 'opacity-50 cursor-wait' : ''}`}>
+                       <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                           <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                           <p className="text-sm text-gray-500">{uploading ? 'Uploading...' : 'Click to upload image'}</p>
+                       </div>
+                       <input type="file" className="hidden" accept="image/*" disabled={uploading} onChange={async (e) => {
+                          if(e.target.files?.[0]) {
+                            const url = await handleImageUpload(e.target.files[0]);
+                            if(url) setGlobalUploadUrl(url);
+                          }
+                       }} />
+                    </label>
+                 </div>
+                 
+                 {globalUploadUrl && (
+                   <div className="flex-1 w-full bg-white p-4 rounded-lg border border-green-200">
+                      <p className="text-xs font-bold text-green-700 mb-2 uppercase tracking-wide">Upload Successful!</p>
+                      <div className="flex gap-2">
+                         <input type="text" readOnly value={globalUploadUrl} className="flex-1 bg-gray-50 border border-gray-200 rounded p-2 text-sm text-gray-600" />
+                         <button onClick={() => copyToClipboard(globalUploadUrl)} className={`p-2 rounded border transition-colors ${copied ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'}`}>
+                           {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
+                         </button>
+                      </div>
+                      <div className="mt-2 h-16 w-16 rounded overflow-hidden border border-gray-200">
+                        <img src={globalUploadUrl} alt="Uploaded" className="w-full h-full object-cover" />
+                      </div>
+                   </div>
+                 )}
+              </div>
+            </div>
+
+            {/* Site Images */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center border-b pb-2"><ImageIcon className="w-5 h-5 mr-2 text-orange-600" /> Site Images</h2>
+              <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center border-b pb-2"><ImageIcon className="w-5 h-5 mr-2 text-orange-600" /> Site Banner Images</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Image</label>
