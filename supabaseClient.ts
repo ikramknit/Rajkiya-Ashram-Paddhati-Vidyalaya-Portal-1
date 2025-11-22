@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 // 1. The URL provided by the user
 const SUPABASE_URL: string = 'https://slxvagtskupvkosaamaw.supabase.co';
 
-// 2. YOU MUST PASTE YOUR ANON KEY HERE
-const SUPABASE_ANON_KEY: string = 'slxvagtskupvkosaamaw';
+// 2. The Anon Public Key provided by the user
+const SUPABASE_ANON_KEY: string = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNseHZhZ3Rza3Vwdmtvc2FhbWF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1ODA4NTYsImV4cCI6MjA3MDE1Njg1Nn0.A720F6_WQJ4QREiux2L99jWLC_ZpYGfQLYREU7w0a4k';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
