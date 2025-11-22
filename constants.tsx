@@ -1,5 +1,5 @@
 import React from 'react';
-import type { YearResult, StaffMember, FacultyStream, Facility, BilingualText, EventItem } from './types';
+import type { YearResult, StaffMember, FacultyStream, Facility, BilingualText, EventItem, NewsItem } from './types';
 import { BookOpen, Monitor, Home, Utensils, Activity, HeartPulse, TreePine, FlaskConical } from 'lucide-react';
 
 export const SCHOOL_NAME: BilingualText = {
@@ -34,6 +34,7 @@ export const UI_LABELS = {
   faculty: { en: "Faculty", hi: "स्टाफ" },
   results: { en: "Results", hi: "परीक्षाफल" },
   events: { en: "Events", hi: "कार्यक्रम" },
+  news: { en: "Latest News", hi: "ताजा खबर" },
   discoverMore: { en: "Discover More", hi: "और जानें" },
   aboutUs: { en: "About Us", hi: "हमारे बारे में" },
   aboutTitle: { en: "A Legacy of Service & Education", hi: "सेवा और शिक्षा की विरासत" },
@@ -64,6 +65,12 @@ export const UI_LABELS = {
   designation: { en: "Designation", hi: "पदनाम" },
   subject: { en: "Subject", hi: "विषय" }
 };
+
+export const NEWS_DATA: NewsItem[] = [
+  { id: 1, text: { en: "Admissions open for session 2024-25", hi: "सत्र 2024-25 के लिए प्रवेश प्रारंभ" }, date: "2024-03-01" },
+  { id: 2, text: { en: "Annual Sports Meet scheduled for next week", hi: "वार्षिक खेल प्रतियोगिता अगले सप्ताह निर्धारित" }, date: "2024-03-10" },
+  { id: 3, text: { en: "Board Exam Results Declared", hi: "बोर्ड परीक्षा परिणाम घोषित" }, date: "2024-04-20" }
+];
 
 export const FACILITIES_DATA: Facility[] = [
   {

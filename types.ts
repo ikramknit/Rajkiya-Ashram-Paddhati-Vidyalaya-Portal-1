@@ -7,6 +7,13 @@ export interface BilingualText {
   hi: string;
 }
 
+export interface NewsItem {
+  id: number;
+  text: BilingualText;
+  date: string;
+  link?: string;
+}
+
 export interface Topper {
   rank: number;
   name: string;

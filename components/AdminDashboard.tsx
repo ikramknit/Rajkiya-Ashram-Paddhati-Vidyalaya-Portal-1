@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon } from 'lucide-react';
-import type { EventItem, YearResult, Facility } from '../types';
+import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon, Users, Bell } from 'lucide-react';
+import type { EventItem, YearResult, Facility, StaffMember, NewsItem } from '../types';
 
 interface AdminDashboardProps {
   events: EventItem[];
@@ -9,6 +9,10 @@ interface AdminDashboardProps {
   setExamResults: React.Dispatch<React.SetStateAction<YearResult[]>>;
   facilities: Facility[];
   setFacilities: React.Dispatch<React.SetStateAction<Facility[]>>;
+  staff: StaffMember[];
+  setStaff: React.Dispatch<React.SetStateAction<StaffMember[]>>;
+  news: NewsItem[];
+  setNews: React.Dispatch<React.SetStateAction<NewsItem[]>>;
   heroImage: string;
   setHeroImage: (url: string) => void;
   aboutImage: string;
@@ -23,13 +27,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   setExamResults,
   facilities,
   setFacilities,
+  staff,
+  setStaff,
+  news,
+  setNews,
   heroImage,
   setHeroImage,
   aboutImage,
   setAboutImage,
   onLogout,
 }) => {
-  const [activeTab, setActiveTab] = useState<'events' | 'results' | 'media'>('events');
+  const [activeTab, setActiveTab] = useState<'events' | 'results' | 'media' | 'staff' | 'news'>('events');
 
   // Event Form State
   const [newEvent, setNewEvent] = useState({
@@ -51,6 +59,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     class12Percent: ''
   });
 
+  // Staff Form State
+  const [newStaff, setNewStaff] = useState({
+    nameEn: '', nameHi: '',
+    designationEn: '', designationHi: '',
+    subjectEn: '', subjectHi: ''
+  });
+
+  // News Form State
+  const [newNews, setNewNews] = useState({
+    textEn: '', textHi: '',
+    date: ''
+  });
+
   const handleAddEvent = (e: React.FormEvent) => {
     e.preventDefault();
     const event: EventItem = {
@@ -68,7 +89,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleAddResult = (e: React.FormEvent) => {
     e.preventDefault();
-    // Basic mock data for toppers to avoid complex form
     const result: YearResult = {
       year: newResult.year,
       class10: {
@@ -100,6 +120,52 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setFacilities(updatedFacilities);
   };
 
+  const handleAddStaff = (e: React.FormEvent) => {
+    e.preventDefault();
+    const member: StaffMember = {
+      id: Date.now(),
+      name: { en: newStaff.nameEn, hi: newStaff.nameHi },
+      designation: { en: newStaff.designationEn, hi: newStaff.designationHi },
+      subject: { en: newStaff.subjectEn, hi: newStaff.subjectHi }
+    };
+    setStaff([...staff, member]);
+    setNewStaff({ nameEn: '', nameHi: '', designationEn: '', designationHi: '', subjectEn: '', subjectHi: '' });
+  };
+
+  const handleDeleteStaff = (id: number) => {
+    setStaff(staff.filter(s => s.id !== id));
+  };
+
+  const handleAddNews = (e: React.FormEvent) => {
+    e.preventDefault();
+    const item: NewsItem = {
+      id: Date.now(),
+      text: { en: newNews.textEn, hi: newNews.textHi },
+      date: newNews.date
+    };
+    setNews([...news, item]);
+    setNewNews({ textEn: '', textHi: '', date: '' });
+  };
+
+  const handleDeleteNews = (id: number) => {
+    setNews(news.filter(n => n.id !== id));
+  };
+
+  const TabButton = ({ id, label, icon: Icon }: { id: string, label: string, icon: any }) => (
+    <button
+      onClick={() => setActiveTab(id as any)}
+      className={`pb-4 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
+        activeTab === id
+          ? 'border-orange-500 text-orange-600'
+          : 'border-transparent text-gray-500 hover:text-gray-700'
+      }`}
+    >
+      <div className="flex items-center">
+        <Icon className="w-4 h-4 mr-2" /> {label}
+      </div>
+    </button>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Admin Header */}
@@ -120,43 +186,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex space-x-4 border-b border-gray-200 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab('events')}
-            className={`pb-4 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'events'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <div className="flex items-center">
-              <Calendar className="w-4 h-4 mr-2" /> Manage Events
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('results')}
-            className={`pb-4 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'results'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <div className="flex items-center">
-              <BarChart className="w-4 h-4 mr-2" /> Manage Results
-            </div>
-          </button>
-          <button
-            onClick={() => setActiveTab('media')}
-            className={`pb-4 px-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
-              activeTab === 'media'
-                ? 'border-orange-500 text-orange-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <div className="flex items-center">
-              <ImageIcon className="w-4 h-4 mr-2" /> Manage Images
-            </div>
-          </button>
+        <div className="mb-6 flex space-x-4 border-b border-gray-200 overflow-x-auto scrollbar-hide">
+          <TabButton id="events" label="Manage Events" icon={Calendar} />
+          <TabButton id="results" label="Manage Results" icon={BarChart} />
+          <TabButton id="staff" label="Manage Staff" icon={Users} />
+          <TabButton id="news" label="Manage News" icon={Bell} />
+          <TabButton id="media" label="Manage Images" icon={ImageIcon} />
         </div>
 
         {activeTab === 'events' && (
@@ -277,6 +312,134 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {activeTab === 'staff' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             {/* Add Staff Form */}
+             <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <Plus className="w-5 h-5 mr-2 text-orange-600" /> Add Staff Member
+              </h2>
+              <form onSubmit={handleAddStaff} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Name (En)</label>
+                    <input required type="text" value={newStaff.nameEn} onChange={e => setNewStaff({...newStaff, nameEn: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Name (Hi)</label>
+                    <input required type="text" value={newStaff.nameHi} onChange={e => setNewStaff({...newStaff, nameHi: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-sm" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Designation (En)</label>
+                    <input required type="text" value={newStaff.designationEn} onChange={e => setNewStaff({...newStaff, designationEn: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Designation (Hi)</label>
+                    <input required type="text" value={newStaff.designationHi} onChange={e => setNewStaff({...newStaff, designationHi: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-sm" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Subject (En)</label>
+                    <input required type="text" value={newStaff.subjectEn} onChange={e => setNewStaff({...newStaff, subjectEn: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Subject (Hi)</label>
+                    <input required type="text" value={newStaff.subjectHi} onChange={e => setNewStaff({...newStaff, subjectHi: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 text-sm" />
+                  </div>
+                </div>
+                <button type="submit" className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 mt-2">
+                  <Save className="w-4 h-4 mr-2" /> Add Staff
+                </button>
+              </form>
+             </div>
+
+             {/* Staff List */}
+             <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Designation</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {staff.map((s) => (
+                      <tr key={s.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{s.name.en}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.designation.en}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.subject.en}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button onClick={() => handleDeleteStaff(s.id)} className="text-red-600 hover:text-red-900">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
+          </div>
+        )}
+
+        {activeTab === 'news' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+             {/* Add News Form */}
+             <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <Plus className="w-5 h-5 mr-2 text-orange-600" /> Add News
+              </h2>
+              <form onSubmit={handleAddNews} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">News Text (English)</label>
+                  <input required type="text" value={newNews.textEn} onChange={e => setNewNews({...newNews, textEn: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">News Text (Hindi)</label>
+                  <input required type="text" value={newNews.textHi} onChange={e => setNewNews({...newNews, textHi: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input required type="date" value={newNews.date} onChange={e => setNewNews({...newNews, date: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
+                </div>
+                <button type="submit" className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
+                  <Save className="w-4 h-4 mr-2" /> Add News
+                </button>
+              </form>
+             </div>
+
+             {/* News List */}
+             <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">News Content</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {news.map((n) => (
+                      <tr key={n.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{n.date}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{n.text.en}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button onClick={() => handleDeleteNews(n.id)} className="text-red-600 hover:text-red-900">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
           </div>
         )}
 

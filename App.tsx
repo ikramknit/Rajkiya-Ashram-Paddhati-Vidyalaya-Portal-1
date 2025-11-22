@@ -13,10 +13,11 @@ import {
   FACULTY_STREAMS, 
   EXAM_RESULTS,
   EVENTS_DATA,
+  NEWS_DATA,
   UI_LABELS
 } from './constants';
-import { Users, ChevronRight, Quote } from 'lucide-react';
-import type { Language, EventItem, YearResult, Facility } from './types';
+import { Users, ChevronRight, Quote, Bell } from 'lucide-react';
+import type { Language, EventItem, YearResult, Facility, StaffMember, NewsItem } from './types';
 
 const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
@@ -24,6 +25,8 @@ const App: React.FC = () => {
   // App State (Lifted from constants to support CMS)
   const [events, setEvents] = useState<EventItem[]>(EVENTS_DATA);
   const [examResults, setExamResults] = useState<YearResult[]>(EXAM_RESULTS);
+  const [staff, setStaff] = useState<StaffMember[]>(STAFF_DATA);
+  const [news, setNews] = useState<NewsItem[]>(NEWS_DATA);
   
   // Image State
   const [heroImage, setHeroImage] = useState("https://picsum.photos/id/202/1920/1080");
@@ -63,6 +66,10 @@ const App: React.FC = () => {
         setExamResults={setExamResults}
         facilities={facilities}
         setFacilities={setFacilities}
+        staff={staff}
+        setStaff={setStaff}
+        news={news}
+        setNews={setNews}
         heroImage={heroImage}
         setHeroImage={setHeroImage}
         aboutImage={aboutImage}
@@ -79,6 +86,25 @@ const App: React.FC = () => {
         setLang={setLang} 
         onLoginClick={() => setView('login')} 
       />
+
+      {/* News Ticker */}
+      <div className="bg-orange-600 text-white overflow-hidden py-2 relative z-40">
+        <div className="flex items-center max-w-7xl mx-auto px-4">
+          <div className="bg-orange-800 px-4 py-1 z-10 absolute left-0 h-full flex items-center font-bold text-sm uppercase tracking-wider shadow-lg sm:static sm:shadow-none sm:mr-4 sm:rounded">
+            <Bell className="w-4 h-4 mr-2 animate-pulse" /> {UI_LABELS.news[lang]}
+          </div>
+          <div className="whitespace-nowrap w-full overflow-hidden relative">
+             <div className="animate-marquee inline-block pl-[100%] sm:pl-[100px]">
+                {news.map((n) => (
+                   <span key={n.id} className="mx-8 text-sm font-medium inline-flex items-center">
+                      <span className="w-2 h-2 bg-white rounded-full mr-2"></span>
+                      {n.text[lang]} <span className="text-orange-200 text-xs ml-2 border border-orange-400 rounded px-1">{n.date}</span>
+                   </span>
+                ))}
+             </div>
+          </div>
+        </div>
+      </div>
 
       {/* Hero Section */}
       <div id="home" className="relative bg-gray-900 text-white">
@@ -206,11 +232,11 @@ const App: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {STAFF_DATA.map((staff) => (
-                      <tr key={staff.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{staff.name[lang]}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{staff.designation[lang]}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">{staff.subject[lang]}</td>
+                    {staff.map((member) => (
+                      <tr key={member.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.name[lang]}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{member.designation[lang]}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">{member.subject[lang]}</td>
                       </tr>
                     ))}
                   </tbody>
