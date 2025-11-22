@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon, Users, Bell } from 'lucide-react';
+import { LogOut, Plus, Trash2, Calendar, BarChart, Save, Image as ImageIcon, Users, Bell, Edit2, X } from 'lucide-react';
 import type { EventItem, YearResult, Facility, StaffMember, NewsItem } from '../types';
 
 interface AdminDashboardProps {
@@ -39,24 +39,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'events' | 'results' | 'media' | 'staff' | 'news'>('events');
 
+  // Editing States
+  const [editingEventIndex, setEditingEventIndex] = useState<number | null>(null);
+  const [editingStaffId, setEditingStaffId] = useState<number | null>(null);
+  const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
+  const [editingResultYear, setEditingResultYear] = useState<string | null>(null);
+
   // Event Form State
   const [newEvent, setNewEvent] = useState({
-    titleEn: '',
-    titleHi: '',
-    descEn: '',
-    descHi: '',
+    titleEn: '', titleHi: '',
+    descEn: '', descHi: '',
     img: ''
   });
 
   // Result Form State
   const [newResult, setNewResult] = useState({
     year: '',
-    class10Total: '',
-    class10Pass: '',
-    class10Percent: '',
-    class12Total: '',
-    class12Pass: '',
-    class12Percent: ''
+    class10Total: '', class10Pass: '', class10Percent: '',
+    class12Total: '', class12Pass: '', class12Percent: ''
   });
 
   // Staff Form State
@@ -74,24 +74,57 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     date: ''
   });
 
-  const handleAddEvent = (e: React.FormEvent) => {
+  // --- EVENTS Handlers ---
+  const handleSaveEvent = (e: React.FormEvent) => {
     e.preventDefault();
-    const event: EventItem = {
+    const eventData: EventItem = {
       title: { en: newEvent.titleEn, hi: newEvent.titleHi },
       desc: { en: newEvent.descEn, hi: newEvent.descHi },
       img: newEvent.img || 'https://picsum.photos/400/300'
     };
-    setEvents([...events, event]);
+
+    if (editingEventIndex !== null) {
+      const updatedEvents = [...events];
+      updatedEvents[editingEventIndex] = eventData;
+      setEvents(updatedEvents);
+      setEditingEventIndex(null);
+    } else {
+      setEvents([...events, eventData]);
+    }
     setNewEvent({ titleEn: '', titleHi: '', descEn: '', descHi: '', img: '' });
   };
 
-  const handleDeleteEvent = (index: number) => {
-    setEvents(events.filter((_, i) => i !== index));
+  const handleEditEvent = (index: number) => {
+    const event = events[index];
+    setNewEvent({
+      titleEn: event.title.en,
+      titleHi: event.title.hi,
+      descEn: event.desc.en,
+      descHi: event.desc.hi,
+      img: event.img
+    });
+    setEditingEventIndex(index);
   };
 
-  const handleAddResult = (e: React.FormEvent) => {
+  const handleDeleteEvent = (index: number) => {
+    if (window.confirm('Are you sure you want to delete this event?')) {
+      setEvents(events.filter((_, i) => i !== index));
+      if (editingEventIndex === index) {
+        setEditingEventIndex(null);
+        setNewEvent({ titleEn: '', titleHi: '', descEn: '', descHi: '', img: '' });
+      }
+    }
+  };
+
+  const cancelEditEvent = () => {
+    setEditingEventIndex(null);
+    setNewEvent({ titleEn: '', titleHi: '', descEn: '', descHi: '', img: '' });
+  };
+
+  // --- RESULTS Handlers ---
+  const handleSaveResult = (e: React.FormEvent) => {
     e.preventDefault();
-    const result: YearResult = {
+    const resultData: YearResult = {
       year: newResult.year,
       class10: {
         totalStudents: Number(newResult.class10Total),
@@ -108,51 +141,139 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         toppers: []
       }
     };
-    setExamResults([...examResults, result].sort((a, b) => a.year.localeCompare(b.year)));
+
+    if (editingResultYear) {
+      // Update existing
+      setExamResults(examResults.map(r => r.year === editingResultYear ? resultData : r));
+      setEditingResultYear(null);
+    } else {
+      // Add new
+      setExamResults([...examResults, resultData].sort((a, b) => a.year.localeCompare(b.year)));
+    }
     setNewResult({ year: '', class10Total: '', class10Pass: '', class10Percent: '', class12Total: '', class12Pass: '', class12Percent: '' });
   };
 
-  const handleDeleteResult = (year: string) => {
-    setExamResults(examResults.filter(r => r.year !== year));
+  const handleEditResult = (year: string) => {
+    const res = examResults.find(r => r.year === year);
+    if (res) {
+      setNewResult({
+        year: res.year,
+        class10Total: res.class10.totalStudents.toString(),
+        class10Pass: res.class10.passed.toString(),
+        class10Percent: res.class10.passPercentage.toString(),
+        class12Total: res.class12.totalStudents.toString(),
+        class12Pass: res.class12.passed.toString(),
+        class12Percent: res.class12.passPercentage.toString()
+      });
+      setEditingResultYear(year);
+    }
   };
 
+  const handleDeleteResult = (year: string) => {
+    if (window.confirm('Are you sure?')) {
+      setExamResults(examResults.filter(r => r.year !== year));
+      if (editingResultYear === year) cancelEditResult();
+    }
+  };
+
+  const cancelEditResult = () => {
+    setEditingResultYear(null);
+    setNewResult({ year: '', class10Total: '', class10Pass: '', class10Percent: '', class12Total: '', class12Pass: '', class12Percent: '' });
+  };
+
+  // --- FACILITIES Handler ---
   const handleFacilityImageChange = (index: number, newUrl: string) => {
     const updatedFacilities = [...facilities];
     updatedFacilities[index] = { ...updatedFacilities[index], image: newUrl };
     setFacilities(updatedFacilities);
   };
 
-  const handleAddStaff = (e: React.FormEvent) => {
+  // --- STAFF Handlers ---
+  const handleSaveStaff = (e: React.FormEvent) => {
     e.preventDefault();
-    const member: StaffMember = {
-      id: Date.now(),
+    const memberData: StaffMember = {
+      id: editingStaffId || Date.now(),
       name: { en: newStaff.nameEn, hi: newStaff.nameHi },
       designation: { en: newStaff.designationEn, hi: newStaff.designationHi },
       subject: { en: newStaff.subjectEn, hi: newStaff.subjectHi }
     };
-    setStaff([...staff, member]);
+
+    if (editingStaffId) {
+      setStaff(staff.map(s => s.id === editingStaffId ? memberData : s));
+      setEditingStaffId(null);
+    } else {
+      setStaff([...staff, memberData]);
+    }
     setNewStaff({ nameEn: '', nameHi: '', designationEn: '', designationHi: '', subjectEn: '', subjectHi: '' });
   };
 
-  const handleDeleteStaff = (id: number) => {
-    setStaff(staff.filter(s => s.id !== id));
+  const handleEditStaff = (id: number) => {
+    const s = staff.find(s => s.id === id);
+    if (s) {
+      setNewStaff({
+        nameEn: s.name.en, nameHi: s.name.hi,
+        designationEn: s.designation.en, designationHi: s.designation.hi,
+        subjectEn: s.subject.en, subjectHi: s.subject.hi
+      });
+      setEditingStaffId(id);
+    }
   };
 
-  const handleAddNews = (e: React.FormEvent) => {
+  const handleDeleteStaff = (id: number) => {
+    if (window.confirm('Delete this staff member?')) {
+      setStaff(staff.filter(s => s.id !== id));
+      if (editingStaffId === id) cancelEditStaff();
+    }
+  };
+
+  const cancelEditStaff = () => {
+    setEditingStaffId(null);
+    setNewStaff({ nameEn: '', nameHi: '', designationEn: '', designationHi: '', subjectEn: '', subjectHi: '' });
+  };
+
+  // --- NEWS Handlers ---
+  const handleSaveNews = (e: React.FormEvent) => {
     e.preventDefault();
-    const item: NewsItem = {
-      id: Date.now(),
+    const itemData: NewsItem = {
+      id: editingNewsId || Date.now(),
       text: { en: newNews.textEn, hi: newNews.textHi },
       content: { en: newNews.contentEn, hi: newNews.contentHi },
       image: newNews.image,
       date: newNews.date
     };
-    setNews([...news, item]);
+
+    if (editingNewsId) {
+      setNews(news.map(n => n.id === editingNewsId ? itemData : n));
+      setEditingNewsId(null);
+    } else {
+      setNews([...news, itemData]);
+    }
     setNewNews({ textEn: '', textHi: '', contentEn: '', contentHi: '', image: '', date: '' });
   };
 
+  const handleEditNews = (id: number) => {
+    const n = news.find(n => n.id === id);
+    if (n) {
+      setNewNews({
+        textEn: n.text.en, textHi: n.text.hi,
+        contentEn: n.content?.en || '', contentHi: n.content?.hi || '',
+        image: n.image || '',
+        date: n.date
+      });
+      setEditingNewsId(id);
+    }
+  };
+
   const handleDeleteNews = (id: number) => {
-    setNews(news.filter(n => n.id !== id));
+    if (window.confirm('Delete this news item?')) {
+      setNews(news.filter(n => n.id !== id));
+      if (editingNewsId === id) cancelEditNews();
+    }
+  };
+
+  const cancelEditNews = () => {
+    setEditingNewsId(null);
+    setNewNews({ textEn: '', textHi: '', contentEn: '', contentHi: '', image: '', date: '' });
   };
 
   const TabButton = ({ id, label, icon: Icon }: { id: string, label: string, icon: any }) => (
@@ -173,11 +294,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Admin Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">CMS Dashboard</h1>
-            <p className="text-sm text-gray-500">Welcome, Administrator</p>
+            <p className="text-sm text-gray-500">Admin Panel</p>
           </div>
           <button
             onClick={onLogout}
@@ -191,21 +312,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 flex space-x-4 border-b border-gray-200 overflow-x-auto scrollbar-hide">
-          <TabButton id="events" label="Manage Events" icon={Calendar} />
-          <TabButton id="results" label="Manage Results" icon={BarChart} />
-          <TabButton id="staff" label="Manage Staff" icon={Users} />
-          <TabButton id="news" label="Manage News" icon={Bell} />
-          <TabButton id="media" label="Manage Images" icon={ImageIcon} />
+          <TabButton id="events" label="Events" icon={Calendar} />
+          <TabButton id="results" label="Results" icon={BarChart} />
+          <TabButton id="staff" label="Staff" icon={Users} />
+          <TabButton id="news" label="News" icon={Bell} />
+          <TabButton id="media" label="Images" icon={ImageIcon} />
         </div>
 
         {activeTab === 'events' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Add Event Form */}
-            <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <Plus className="w-5 h-5 mr-2 text-orange-600" /> Add New Event
+            {/* Add/Edit Event Form */}
+            <div className="bg-white p-6 rounded-xl shadow-sm h-fit border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                <span className="flex items-center">
+                  {editingEventIndex !== null ? <Edit2 className="w-5 h-5 mr-2 text-orange-600" /> : <Plus className="w-5 h-5 mr-2 text-orange-600" />}
+                  {editingEventIndex !== null ? 'Edit Event' : 'Add New Event'}
+                </span>
+                {editingEventIndex !== null && (
+                  <button onClick={cancelEditEvent} className="text-xs text-red-500 hover:underline flex items-center">
+                    <X className="w-3 h-3 mr-1" /> Cancel
+                  </button>
+                )}
               </h2>
-              <form onSubmit={handleAddEvent} className="space-y-4">
+              <form onSubmit={handleSaveEvent} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Title (English)</label>
                   <input required type="text" value={newEvent.titleEn} onChange={e => setNewEvent({...newEvent, titleEn: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
@@ -227,7 +356,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <input type="text" value={newEvent.img} onChange={e => setNewEvent({...newEvent, img: e.target.value})} placeholder="https://..." className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
                 </div>
                 <button type="submit" className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
-                  <Save className="w-4 h-4 mr-2" /> Save Event
+                  <Save className="w-4 h-4 mr-2" /> {editingEventIndex !== null ? 'Update Event' : 'Save Event'}
                 </button>
               </form>
             </div>
@@ -235,15 +364,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             {/* Events List */}
             <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {events.map((event, idx) => (
-                <div key={idx} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                  <img src={event.img} alt="Event" className="h-32 w-full object-cover" />
-                  <div className="p-4 flex-1">
-                    <h3 className="font-bold text-gray-800">{event.title.en}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{event.desc.en}</p>
+                <div key={idx} className={`bg-white rounded-lg shadow-sm border transition-all flex flex-col ${editingEventIndex === idx ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200'}`}>
+                  <div className="relative h-32">
+                     <img src={event.img} alt="Event" className="h-full w-full object-cover rounded-t-lg" />
+                     {editingEventIndex === idx && <div className="absolute inset-0 bg-orange-500/20 flex items-center justify-center text-white font-bold">Editing...</div>}
                   </div>
-                  <div className="bg-gray-50 p-3 border-t border-gray-100 flex justify-end">
-                    <button onClick={() => handleDeleteEvent(idx)} className="text-red-600 hover:text-red-800 text-sm flex items-center">
-                      <Trash2 className="w-4 h-4 mr-1" /> Delete
+                  <div className="p-4 flex-1">
+                    <h3 className="font-bold text-gray-800 line-clamp-1">{event.title.en}</h3>
+                    <p className="text-sm text-gray-600 mb-2 line-clamp-2">{event.desc.en}</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 border-t border-gray-100 flex justify-between items-center">
+                    <button onClick={() => handleEditEvent(idx)} className="text-blue-600 hover:text-blue-800 text-sm flex items-center font-medium">
+                      <Edit2 className="w-3 h-3 mr-1" /> Edit
+                    </button>
+                    <button onClick={() => handleDeleteEvent(idx)} className="text-red-600 hover:text-red-800 text-sm flex items-center font-medium">
+                      <Trash2 className="w-3 h-3 mr-1" /> Delete
                     </button>
                   </div>
                 </div>
@@ -254,15 +389,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {activeTab === 'results' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Add Result Form */}
-            <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <Plus className="w-5 h-5 mr-2 text-orange-600" /> Add Year Result
+            {/* Add/Edit Result Form */}
+            <div className="bg-white p-6 rounded-xl shadow-sm h-fit border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                <span className="flex items-center">
+                  {editingResultYear ? <Edit2 className="w-5 h-5 mr-2 text-orange-600" /> : <Plus className="w-5 h-5 mr-2 text-orange-600" />}
+                  {editingResultYear ? `Edit ${editingResultYear}` : 'Add Year Result'}
+                </span>
+                {editingResultYear && (
+                   <button onClick={cancelEditResult} className="text-xs text-red-500 hover:underline flex items-center">
+                    <X className="w-3 h-3 mr-1" /> Cancel
+                  </button>
+                )}
               </h2>
-              <form onSubmit={handleAddResult} className="space-y-4">
+              <form onSubmit={handleSaveResult} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year (e.g., 2024-25)</label>
-                  <input required type="text" value={newResult.year} onChange={e => setNewResult({...newResult, year: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
+                  <input 
+                    required 
+                    type="text" 
+                    value={newResult.year} 
+                    onChange={e => setNewResult({...newResult, year: e.target.value})} 
+                    className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2 bg-gray-50"
+                    disabled={!!editingResultYear} // Prevent changing year when editing
+                  />
                 </div>
                 
                 <div className="border-t border-gray-100 pt-4">
@@ -284,7 +434,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 <button type="submit" className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 mt-4">
-                  <Save className="w-4 h-4 mr-2" /> Add Result
+                  <Save className="w-4 h-4 mr-2" /> {editingResultYear ? 'Update Result' : 'Add Result'}
                 </button>
               </form>
             </div>
@@ -302,12 +452,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {examResults.slice().reverse().map((res) => (
-                    <tr key={res.year}>
+                    <tr key={res.year} className={editingResultYear === res.year ? 'bg-orange-50' : ''}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{res.year}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{res.class10.passPercentage}%</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{res.class12.passPercentage}%</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onClick={() => handleDeleteResult(res.year)} className="text-red-600 hover:text-red-900">
+                        <button onClick={() => handleEditResult(res.year)} className="text-blue-600 hover:text-blue-900 mr-3" title="Edit">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeleteResult(res.year)} className="text-red-600 hover:text-red-900" title="Delete">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </td>
@@ -321,12 +474,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {activeTab === 'staff' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-             {/* Add Staff Form */}
-             <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <Plus className="w-5 h-5 mr-2 text-orange-600" /> Add Staff Member
+             {/* Add/Edit Staff Form */}
+             <div className="bg-white p-6 rounded-xl shadow-sm h-fit border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                <span className="flex items-center">
+                  {editingStaffId ? <Edit2 className="w-5 h-5 mr-2 text-orange-600" /> : <Plus className="w-5 h-5 mr-2 text-orange-600" />}
+                  {editingStaffId ? 'Edit Staff' : 'Add Staff Member'}
+                </span>
+                {editingStaffId && (
+                   <button onClick={cancelEditStaff} className="text-xs text-red-500 hover:underline flex items-center">
+                    <X className="w-3 h-3 mr-1" /> Cancel
+                  </button>
+                )}
               </h2>
-              <form onSubmit={handleAddStaff} className="space-y-4">
+              <form onSubmit={handleSaveStaff} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Name (En)</label>
@@ -358,7 +519,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
                 <button type="submit" className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 mt-2">
-                  <Save className="w-4 h-4 mr-2" /> Add Staff
+                  <Save className="w-4 h-4 mr-2" /> {editingStaffId ? 'Update Staff' : 'Add Staff'}
                 </button>
               </form>
              </div>
@@ -376,11 +537,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {staff.map((s) => (
-                      <tr key={s.id}>
+                      <tr key={s.id} className={editingStaffId === s.id ? 'bg-orange-50' : ''}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{s.name.en}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.designation.en}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{s.subject.en}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button onClick={() => handleEditStaff(s.id)} className="text-blue-600 hover:text-blue-900 mr-3">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
                           <button onClick={() => handleDeleteStaff(s.id)} className="text-red-600 hover:text-red-900">
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -395,12 +559,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         {activeTab === 'news' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-             {/* Add News Form */}
-             <div className="bg-white p-6 rounded-xl shadow-sm h-fit">
-              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                <Plus className="w-5 h-5 mr-2 text-orange-600" /> Add News
+             {/* Add/Edit News Form */}
+             <div className="bg-white p-6 rounded-xl shadow-sm h-fit border border-gray-200">
+              <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center justify-between">
+                <span className="flex items-center">
+                  {editingNewsId ? <Edit2 className="w-5 h-5 mr-2 text-orange-600" /> : <Plus className="w-5 h-5 mr-2 text-orange-600" />}
+                  {editingNewsId ? 'Edit News' : 'Add News'}
+                </span>
+                {editingNewsId && (
+                   <button onClick={cancelEditNews} className="text-xs text-red-500 hover:underline flex items-center">
+                    <X className="w-3 h-3 mr-1" /> Cancel
+                  </button>
+                )}
               </h2>
-              <form onSubmit={handleAddNews} className="space-y-4">
+              <form onSubmit={handleSaveNews} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Headline (English)</label>
                   <input required type="text" value={newNews.textEn} onChange={e => setNewNews({...newNews, textEn: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
@@ -429,7 +601,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <input required type="date" value={newNews.date} onChange={e => setNewNews({...newNews, date: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
                 </div>
                 <button type="submit" className="w-full flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700">
-                  <Save className="w-4 h-4 mr-2" /> Add News
+                  <Save className="w-4 h-4 mr-2" /> {editingNewsId ? 'Update News' : 'Add News'}
                 </button>
               </form>
              </div>
@@ -447,7 +619,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {news.map((n) => (
-                      <tr key={n.id}>
+                      <tr key={n.id} className={editingNewsId === n.id ? 'bg-orange-50' : ''}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{n.date}</td>
                         <td className="px-6 py-4 text-sm text-gray-900">
                           <div className="font-medium">{n.text.en}</div>
@@ -461,6 +633,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button onClick={() => handleEditNews(n.id)} className="text-blue-600 hover:text-blue-900 mr-3">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
                           <button onClick={() => handleDeleteNews(n.id)} className="text-red-600 hover:text-red-900">
                             <Trash2 className="w-4 h-4" />
                           </button>
