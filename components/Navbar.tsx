@@ -32,9 +32,13 @@ const Navbar: React.FC<NavbarProps> = ({ lang, setLang, onLoginClick, config }) 
         <div className="flex justify-between h-20">
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center gap-2">
-              <div className="bg-orange-600 p-2 rounded-full">
-                 <GraduationCap className="h-6 w-6 text-white" />
-              </div>
+              {config.logo ? (
+                <img src={config.logo} alt="School Logo" className="h-12 w-12 object-contain" />
+              ) : (
+                <div className="bg-orange-600 p-2 rounded-full">
+                   <GraduationCap className="h-6 w-6 text-white" />
+                </div>
+              )}
               <div className="flex flex-col">
                 <span className="font-bold text-lg leading-tight text-gray-800 tracking-tight md:text-xl line-clamp-1">
                   {config.schoolName[lang]}

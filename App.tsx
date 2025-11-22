@@ -37,7 +37,7 @@ const App: React.FC = () => {
   // View State
   const [view, setView] = useState<'public' | 'login' | 'admin'>('public');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [selectedYear, setSelectedYear] = useState(examResults[examResults.length - 1].year);
+  const [selectedYear, setSelectedYear] = useState(examResults[examResults.length - 1]?.year || "2023-24");
 
   // Fetch Data from Supabase
   useEffect(() => {
@@ -58,6 +58,7 @@ const App: React.FC = () => {
           if (item.key === 'phone') newConfig.phone = item.value;
           if (item.key === 'email') newConfig.email = item.value;
           if (item.key === 'about_image') newConfig.aboutImage = item.value;
+          if (item.key === 'logo') newConfig.logo = item.value;
           if (item.key === 'hero_images') {
             try {
               newConfig.heroImages = JSON.parse(item.value);
@@ -113,6 +114,7 @@ const App: React.FC = () => {
           class10: r.class10,
           class12: r.class12
         })));
+        setSelectedYear(resultsData[resultsData.length - 1].year);
       }
 
       // Fetch Facilities
@@ -359,6 +361,7 @@ const App: React.FC = () => {
           </div>
 
           {/* Detailed Results Card */}
+          {currentResult && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Class 10 */}
             <div className="bg-white rounded-xl shadow-md p-6 border-t-4 border-orange-500">
@@ -444,6 +447,7 @@ const App: React.FC = () => {
               </div>
             </div>
           </div>
+          )}
         </div>
       </section>
 

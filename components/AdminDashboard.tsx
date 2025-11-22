@@ -450,6 +450,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         { key: 'email', value: siteConfig.email },
         { key: 'hero_images', value: JSON.stringify(siteConfig.heroImages) },
         { key: 'about_image', value: siteConfig.aboutImage },
+        { key: 'logo', value: siteConfig.logo || '' },
       ];
       
       const { error } = await supabase.from('jola_settings').upsert(upserts);
@@ -553,6 +554,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                  <div>
                    <label className="block text-xs font-medium text-gray-500 uppercase mb-1">Email</label>
                    <input type="text" value={siteConfig.email} onChange={(e) => setSiteConfig({...siteConfig, email: e.target.value})} className="w-full border p-2 rounded" />
+                 </div>
+              </div>
+
+              {/* Logo Upload */}
+              <div className="border-t pt-6">
+                 <h3 className="font-medium text-gray-900 mb-3">School Logo</h3>
+                 <div className="flex gap-2 items-center">
+                    <div className="flex-1">
+                      <div className="flex gap-2">
+                        <input type="text" value={siteConfig.logo || ''} onChange={(e) => setSiteConfig({...siteConfig, logo: e.target.value})} placeholder="Logo URL" className="flex-1 border p-2 rounded" />
+                        <label className="cursor-pointer bg-gray-100 border p-2 rounded hover:bg-gray-200"><Upload className="w-5 h-5" />
+                            <input type="file" className="hidden" accept="image/*" onChange={async(e) => {
+                              if(e.target.files?.[0]) {
+                                const url = await handleImageUpload(e.target.files[0]);
+                                if(url) setSiteConfig({...siteConfig, logo: url});
+                              }
+                            }} />
+                        </label>
+                      </div>
+                    </div>
+                    <div className="h-16 w-16 border border-gray-200 rounded bg-gray-50 flex items-center justify-center overflow-hidden">
+                      {siteConfig.logo ? (
+                        <img src={siteConfig.logo} className="h-full w-full object-contain" alt="Logo" />
+                      ) : (
+                        <span className="text-xs text-gray-400">No Logo</span>
+                      )}
+                    </div>
                  </div>
               </div>
 

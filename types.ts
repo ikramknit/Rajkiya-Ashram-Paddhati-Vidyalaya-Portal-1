@@ -15,6 +15,7 @@ export interface SiteConfig {
   email: string;
   heroImages: string[];
   aboutImage: string;
+  logo?: string;
 }
 
 export interface NewsItem {
