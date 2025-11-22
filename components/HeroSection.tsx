@@ -29,7 +29,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ lang, config }) => {
         {images.map((img, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
               index === currentImageIndex ? 'opacity-100' : 'opacity-0'
             }`}
           >
