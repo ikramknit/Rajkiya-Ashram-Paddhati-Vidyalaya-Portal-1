@@ -22,6 +22,16 @@
       .animate-marquee:hover {
         animation-play-state: paused;
       }
+      @keyframes vertical-scroll {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(-50%); }
+      }
+      .animate-vertical-scroll {
+        animation: vertical-scroll 20s linear infinite;
+      }
+      .animate-vertical-scroll:hover {
+        animation-play-state: paused;
+      }
     </style>
   <script type="importmap">
 {

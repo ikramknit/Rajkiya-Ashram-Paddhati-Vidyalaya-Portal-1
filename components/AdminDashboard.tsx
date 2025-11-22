@@ -69,6 +69,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // News Form State
   const [newNews, setNewNews] = useState({
     textEn: '', textHi: '',
+    contentEn: '', contentHi: '',
+    image: '',
     date: ''
   });
 
@@ -141,10 +143,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const item: NewsItem = {
       id: Date.now(),
       text: { en: newNews.textEn, hi: newNews.textHi },
+      content: { en: newNews.contentEn, hi: newNews.contentHi },
+      image: newNews.image,
       date: newNews.date
     };
     setNews([...news, item]);
-    setNewNews({ textEn: '', textHi: '', date: '' });
+    setNewNews({ textEn: '', textHi: '', contentEn: '', contentHi: '', image: '', date: '' });
   };
 
   const handleDeleteNews = (id: number) => {
@@ -398,13 +402,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
               </h2>
               <form onSubmit={handleAddNews} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">News Text (English)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Headline (English)</label>
                   <input required type="text" value={newNews.textEn} onChange={e => setNewNews({...newNews, textEn: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">News Text (Hindi)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Headline (Hindi)</label>
                   <input required type="text" value={newNews.textHi} onChange={e => setNewNews({...newNews, textHi: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
                 </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Content (English)</label>
+                  <textarea rows={3} value={newNews.contentEn} onChange={e => setNewNews({...newNews, contentEn: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Content (Hindi)</label>
+                  <textarea rows={3} value={newNews.contentHi} onChange={e => setNewNews({...newNews, contentHi: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                  <input type="text" value={newNews.image} onChange={e => setNewNews({...newNews, image: e.target.value})} placeholder="https://..." className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                   <input required type="date" value={newNews.date} onChange={e => setNewNews({...newNews, date: e.target.value})} className="w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 border p-2" />
@@ -421,7 +440,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">News Content</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Headline</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                       <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                     </tr>
                   </thead>
@@ -429,7 +449,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     {news.map((n) => (
                       <tr key={n.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{n.date}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{n.text.en}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          <div className="font-medium">{n.text.en}</div>
+                          <div className="text-gray-500 text-xs truncate max-w-xs">{n.content?.en}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {n.image ? (
+                            <img src={n.image} alt="thumb" className="h-10 w-10 rounded object-cover border border-gray-200" />
+                          ) : (
+                            <span className="text-xs text-gray-400">No Img</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <button onClick={() => handleDeleteNews(n.id)} className="text-red-600 hover:text-red-900">
                             <Trash2 className="w-4 h-4" />

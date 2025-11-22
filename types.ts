@@ -9,7 +9,9 @@ export interface BilingualText {
 
 export interface NewsItem {
   id: number;
-  text: BilingualText;
+  text: BilingualText; // Headline
+  content?: BilingualText; // Detailed Description
+  image?: string; // Optional Image URL
   date: string;
   link?: string;
 }

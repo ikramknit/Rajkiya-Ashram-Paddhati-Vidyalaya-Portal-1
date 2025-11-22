@@ -34,7 +34,10 @@ export const UI_LABELS = {
   faculty: { en: "Faculty", hi: "स्टाफ" },
   results: { en: "Results", hi: "परीक्षाफल" },
   events: { en: "Events", hi: "कार्यक्रम" },
-  news: { en: "Latest News", hi: "ताजा खबर" },
+  news: { en: "Latest News & Updates", hi: "ताजा समाचार और अपडेट" },
+  readMore: { en: "Read More", hi: "और पढ़ें" },
+  close: { en: "Close", hi: "बंद करें" },
+  postedOn: { en: "Posted on", hi: "प्रकाशित तिथि" },
   discoverMore: { en: "Discover More", hi: "और जानें" },
   aboutUs: { en: "About Us", hi: "हमारे बारे में" },
   aboutTitle: { en: "A Legacy of Service & Education", hi: "सेवा और शिक्षा की विरासत" },
@@ -67,9 +70,36 @@ export const UI_LABELS = {
 };
 
 export const NEWS_DATA: NewsItem[] = [
-  { id: 1, text: { en: "Admissions open for session 2024-25", hi: "सत्र 2024-25 के लिए प्रवेश प्रारंभ" }, date: "2024-03-01" },
-  { id: 2, text: { en: "Annual Sports Meet scheduled for next week", hi: "वार्षिक खेल प्रतियोगिता अगले सप्ताह निर्धारित" }, date: "2024-03-10" },
-  { id: 3, text: { en: "Board Exam Results Declared", hi: "बोर्ड परीक्षा परिणाम घोषित" }, date: "2024-04-20" }
+  { 
+    id: 1, 
+    text: { en: "Admissions open for session 2024-25", hi: "सत्र 2024-25 के लिए प्रवेश प्रारंभ" }, 
+    content: { 
+      en: "Applications are now being accepted for the upcoming academic session. Interested candidates can visit the school office for forms between 9 AM and 2 PM.", 
+      hi: "आगामी शैक्षणिक सत्र के लिए आवेदन स्वीकार किए जा रहे हैं। इच्छुक उम्मीदवार सुबह 9 बजे से दोपहर 2 बजे तक फॉर्म के लिए स्कूल कार्यालय में संपर्क कर सकते हैं।" 
+    },
+    date: "2024-03-01",
+    image: "https://picsum.photos/id/20/600/400"
+  },
+  { 
+    id: 2, 
+    text: { en: "Annual Sports Meet scheduled for next week", hi: "वार्षिक खेल प्रतियोगिता अगले सप्ताह निर्धारित" }, 
+    content: {
+      en: "The annual sports meet will feature events like running, kabaddi, and volleyball. All students must register with their house captains.",
+      hi: "वार्षिक खेल बैठक में दौड़, कबड्डी और वॉलीबॉल जैसे कार्यक्रम होंगे। सभी छात्रों को अपने हाउस कैप्टन के साथ पंजीकरण करना होगा।"
+    },
+    date: "2024-03-10",
+    image: "https://picsum.photos/id/73/600/400"
+  },
+  { 
+    id: 3, 
+    text: { en: "Board Exam Results Declared", hi: "बोर्ड परीक्षा परिणाम घोषित" }, 
+    content: {
+      en: "The results for Class 10 and 12 board exams have been declared. Our students have once again performed exceptionally well with 100% pass rate in Class 12.",
+      hi: "कक्षा 10 और 12 की बोर्ड परीक्षाओं के परिणाम घोषित कर दिए गए हैं। हमारे छात्रों ने एक बार फिर कक्षा 12 में 100% उत्तीर्ण दर के साथ असाधारण प्रदर्शन किया है।"
+    },
+    date: "2024-04-20",
+    image: "https://picsum.photos/id/4/600/400"
+  }
 ];
 
 export const FACILITIES_DATA: Facility[] = [
