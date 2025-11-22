@@ -23,7 +23,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ lang, config }) => {
   }, [images.length]);
 
   return (
-    <div id="home" className="relative bg-gray-900 overflow-hidden h-[50vh] md:h-[70vh]">
+    <div id="home" className="relative bg-gray-900 overflow-hidden w-full h-screen">
       {/* Slideshow Background */}
       <div className="absolute inset-0 w-full h-full">
         {images.map((img, index) => (
