@@ -9,15 +9,16 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { EXAM_RESULTS, UI_LABELS } from '../constants';
-import type { Language } from '../types';
+import { UI_LABELS } from '../constants';
+import type { Language, YearResult } from '../types';
 
 interface ResultChartProps {
   lang: Language;
+  results: YearResult[];
 }
 
-const ResultChart: React.FC<ResultChartProps> = ({ lang }) => {
-  const data = EXAM_RESULTS.map((r) => ({
+const ResultChart: React.FC<ResultChartProps> = ({ lang, results }) => {
+  const data = results.map((r) => ({
     name: r.year.replace('20', "'"), // Shorten year label
     Class10: r.class10.passPercentage === 'NA' ? 0 : Number(r.class10.passPercentage),
     Class12: r.class12.passPercentage === 'NA' ? 0 : Number(r.class12.passPercentage),

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ResultChart from './components/ResultChart';
+import Login from './components/Login';
+import AdminDashboard from './components/AdminDashboard';
 import { 
   SCHOOL_NAME, 
   SCHOOL_NAME_SUB, 
@@ -14,13 +16,50 @@ import {
   UI_LABELS
 } from './constants';
 import { Users, ChevronRight, Quote } from 'lucide-react';
-import type { Language } from './types';
+import type { Language, EventItem, YearResult } from './types';
 
 const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
-  const [selectedYear, setSelectedYear] = useState(EXAM_RESULTS[EXAM_RESULTS.length - 1].year);
+  
+  // App State (Lifted from constants to support CMS)
+  const [events, setEvents] = useState<EventItem[]>(EVENTS_DATA);
+  const [examResults, setExamResults] = useState<YearResult[]>(EXAM_RESULTS);
+  
+  // View State
+  const [view, setView] = useState<'public' | 'login' | 'admin'>('public');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(examResults[examResults.length - 1].year);
 
-  const currentResult = EXAM_RESULTS.find(r => r.year === selectedYear) || EXAM_RESULTS[EXAM_RESULTS.length - 1];
+  // Handlers
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    setView('admin');
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setView('public');
+  };
+
+  // Derived Data
+  const currentResult = examResults.find(r => r.year === selectedYear) || examResults[examResults.length - 1];
+
+  // Routing
+  if (view === 'login') {
+    return <Login onLogin={handleLoginSuccess} onCancel={() => setView('public')} />;
+  }
+
+  if (view === 'admin' && isAuthenticated) {
+    return (
+      <AdminDashboard 
+        events={events} 
+        setEvents={setEvents}
+        examResults={examResults}
+        setExamResults={setExamResults}
+        onLogout={handleLogout} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -197,12 +236,12 @@ const App: React.FC = () => {
           
           {/* Chart */}
           <div className="mb-12">
-            <ResultChart lang={lang} />
+            <ResultChart lang={lang} results={examResults} />
           </div>
 
           {/* Year Selector */}
           <div className="flex overflow-x-auto pb-4 mb-8 gap-2 scrollbar-hide">
-            {EXAM_RESULTS.map((res) => (
+            {examResults.map((res) => (
               <button
                 key={res.year}
                 onClick={() => setSelectedYear(res.year)}
@@ -236,7 +275,7 @@ const App: React.FC = () => {
                   <div className="text-xs text-green-600 uppercase">{UI_LABELS.passed[lang]}</div>
                 </div>
                 <div className="bg-blue-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{currentResult.class10.passPercentage}%</div>
+                  <div className="text-2xl font-bold text-blue-600">{currentResult.class10.passPercentage === 'NA' ? 'N/A' : `${currentResult.class10.passPercentage}%`}</div>
                   <div className="text-xs text-blue-600 uppercase">{UI_LABELS.rate[lang]}</div>
                 </div>
               </div>
@@ -314,7 +353,7 @@ const App: React.FC = () => {
             <p className="text-gray-500 mt-2">{UI_LABELS.lifeSub[lang]}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {EVENTS_DATA.map((event, i) => (
+            {events.map((event, i) => (
                <div key={i} className="group relative overflow-hidden rounded-xl cursor-pointer">
                  <img src={event.img} alt={event.title[lang]} className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110" />
                  <div className="absolute inset-0 bg-black bg-opacity-40 hover:bg-opacity-30 transition-opacity flex flex-col justify-end p-6 text-white">
@@ -327,7 +366,7 @@ const App: React.FC = () => {
         </div>
       </section>
 
-      <Footer lang={lang} />
+      <Footer lang={lang} onAdminClick={() => setView('login')} />
     </div>
   );
 };

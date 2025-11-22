@@ -1,13 +1,14 @@
 import React from 'react';
 import { SCHOOL_NAME, SCHOOL_NAME_SUB, ADDRESS, DEPARTMENT, UI_LABELS } from '../constants';
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Phone, Mail, Lock } from 'lucide-react';
 import type { Language } from '../types';
 
 interface FooterProps {
   lang: Language;
+  onAdminClick: () => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ lang }) => {
+const Footer: React.FC<FooterProps> = ({ lang, onAdminClick }) => {
   return (
     <footer className="bg-gray-900 text-white pt-12 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,8 +56,15 @@ const Footer: React.FC<FooterProps> = ({ lang }) => {
           </div>
         </div>
         
-        <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500 text-sm">
+        <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-500 text-sm">
           <p>&copy; {new Date().getFullYear()} {SCHOOL_NAME[lang]}. {UI_LABELS.rightsReserved[lang]}</p>
+          <button 
+            onClick={onAdminClick} 
+            className="flex items-center gap-1 mt-4 md:mt-0 hover:text-gray-300 transition-colors"
+          >
+            <Lock className="w-3 h-3" />
+            Admin
+          </button>
         </div>
       </div>
     </footer>
