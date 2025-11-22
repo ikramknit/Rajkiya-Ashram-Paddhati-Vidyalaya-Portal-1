@@ -1,5 +1,5 @@
 import React from 'react';
-import { YearResult, StaffMember, FacultyStream } from './types';
+import type { YearResult, StaffMember, FacultyStream } from './types';
 import { BookOpen, Monitor, Home, Utensils, Activity, HeartPulse, TreePine, FlaskConical } from 'lucide-react';
 
 export const SCHOOL_NAME_HINDI = "राजकीय आश्रम पद्धति विद्यालय";
