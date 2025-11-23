@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, ArrowLeft, AlertCircle, Info } from 'lucide-react';
+import { Lock, ArrowLeft, AlertCircle } from 'lucide-react';
 
 interface LoginProps {
   onLogin: () => void;
@@ -43,22 +43,6 @@ const Login: React.FC<LoginProps> = ({ onLogin, onCancel }) => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {/* Helper box for demo purposes */}
-          <div className="mb-6 bg-blue-50 p-4 rounded-md border border-blue-100">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <Info className="h-5 w-5 text-blue-400" aria-hidden="true" />
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-blue-800">Demo Credentials</h3>
-                <div className="mt-2 text-sm text-blue-700">
-                  <p><span className="font-semibold">Email:</span> ikram.knit@gmail.com</p>
-                  <p><span className="font-semibold">Password:</span> Ikram@123</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
